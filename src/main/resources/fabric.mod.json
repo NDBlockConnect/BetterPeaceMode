@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "betterpeacemode",
+  "version": "${version}",
+  "name": "BetterPeaceMode",
+  "description": "Two additional peace-oriented game modes: Better Peace stops friendly mobs from attacking each other, and Real Peace keeps hostile spawns alive while making every hostile entity passive until something provokes it.",
+  "authors": ["StarsailsClover"],
+  "contact": {
+    "homepage": "https://github.com/NDBlockConnect/BetterPeaceMode",
+    "sources": "https://github.com/NDBlockConnect/BetterPeaceMode",
+    "issues": "https://github.com/NDBlockConnect/BetterPeaceMode/issues"
+  },
+  "license": "Apache-2.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["${maven_group}.betterpeacemode.BetterPeaceMode"]
+  },
+  "mixins": ["betterpeacemode.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

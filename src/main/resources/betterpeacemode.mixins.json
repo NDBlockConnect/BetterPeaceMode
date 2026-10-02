@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.blockconnect.betterpeacemode.mixin",
+  "refmap": "betterpeacemode.refmap.json",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MobMixin",
+    "CreeperMixin",
+    "EnderManMixin",
+    "FoxMixin",
+    "ZombifiedPiglinMixin",
+    "LivingEntityMixin",
+    "ServerPlayerMixin",
+    "ServerLevelMixin",
+    "ZombieMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,68 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+version = mod_version + '-JE-1.21.11-Fabric'
+group = maven_group
+
+base {
+    archivesName = 'BetterPeaceMode'
+}
+
+// Loom adds the Minecraft and Fabric repositories, but the LWJGL runtime natives used by
+// `minecraftRuntimeLibraries` come from Maven Central, so declare the set explicitly rather
+// than relying on plugin-side injection order.
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+    maven {
+        name = 'Mojang'
+        url = 'https://libraries.minecraft.net/'
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    // Mojang official mappings, matching the rest of the BlockConnect Minecraft
+    // line (Despotes 1.20.1 - 1.21.10). Keep this in sync with the org default.
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+// 1.21.11 ships obfuscated, so Mixin needs a refmap to translate the Mojang-mapped method names
+// written in @Inject / @ModifyVariable into the runtime (intermediary) names. The annotation
+// processor writes it as "<archivesName>-refmap.json"; the name is pinned here so the mixin
+// config reference stays stable even if the archive name is changed later.
+loom {
+    mixin {
+        useLegacyMixinAp = true
+        defaultRefmapName = 'betterpeacemode.refmap.json'
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+processResources {
+    inputs.property 'version', mod_semver
+    filesMatching('fabric.mod.json') {
+        expand version: mod_semver, maven_group: maven_group
+    }
+}
+
+jar {
+    archiveBaseName = 'BetterPeaceMode'
+}
+//Git Hub@ NDBl ockC onne ct | BlockC onnect @Stars ailsC lover
