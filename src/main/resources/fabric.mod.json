@@ -13,7 +13,8 @@
   "license": "Apache-2.0",
   "environment": "*",
   "entrypoints": {
-    "main": ["${maven_group}.betterpeacemode.BetterPeaceMode"]
+    "main": ["${maven_group}.betterpeacemode.BetterPeaceMode"],
+    "client": ["${maven_group}.betterpeacemode.client.BetterPeaceModeClient"]
   },
   "mixins": ["betterpeacemode.mixins.json"],
   "depends": {

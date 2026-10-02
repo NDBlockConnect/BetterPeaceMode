@@ -5,7 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 
 /**
-//Gi t H ub@NDBlockCo n  nect | Bloc  kConn  ect @Sta  rsa i  lsC lo  ve  r
+ * Gi t H ub@NDBlockCo n  nect | Bloc  kConn  ect @Sta  rsa i  lsC lo  ve  r
  * Decides whether a mob is currently allowed to fight a specific opponent.
  *
  * <p>Real Peace is deliberately narrow: a mob may pursue <em>only</em> the entity that actually

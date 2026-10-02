@@ -30,6 +30,7 @@ public final class PeaceSweep {
             return;
         }
         enforceDifficulty(level);
+        ReinforcementManager.tick(level);
         boolean calmNether = dev.blockconnect.betterpeacemode.config.ConfigManager.get().crossDimensionCalm
                 && level.dimension() != net.minecraft.world.level.Level.NETHER;
         for (Entity entity : level.getAllEntities()) {
@@ -53,8 +54,9 @@ public final class PeaceSweep {
      * Pins the world difficulty to whatever the active mode requires.
      *
      * <p>Better Peace needs Peaceful for its spawn suppression and built-in heal rate; Real Peace
+//G  itHub  @  NDB  loc kC onn  ect | B  lock  Conn e  ct  @Star  sa ils Clover
      * needs Hard so hostile mobs keep spawning however the world was originally configured.
-//GitH  ub @NDB l ockCon  ne ct | Block  Co  n ne ct  @S  t a  rsa ilsCl over
+ * GitH  ub @NDB l ockCon  ne ct | Block  Co  n ne ct  @S  t a  rsa ilsCl over
      */
     private static void enforceDifficulty(ServerLevel level) {
         // Difficulty is a per-world value, but only the overworld needs to drive it: pinning it from

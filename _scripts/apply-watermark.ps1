@@ -38,6 +38,30 @@ function New-RenderedWatermark([string]$Value) {
     return $builder.ToString()
 }
 
+function Get-SafeLines([System.Collections.Generic.List[string]]$Lines) {
+    # A watermark must never land inside a block comment, on an import/package line, or between a
+    # decorator and its declaration, because those positions either break the document or make it
+    # unreadable. Only "ordinary" code or text lines are offered as candidates.
+    $safe = [System.Collections.Generic.List[int]]::new()
+    $inBlockComment = $false
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        $line = $Lines[$i]
+        $trimmed = $line.Trim()
+        $startsInComment = $inBlockComment
+        if (-not $inBlockComment -and $trimmed -match '/\*') { $inBlockComment = $true }
+        if ($inBlockComment -and $trimmed -match '\*/') {
+            $inBlockComment = $false
+            if (-not $startsInComment) { }
+        }
+        if ($startsInComment -or $inBlockComment) { continue }
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        if ($trimmed -like 'package *' -or $trimmed -like 'import *') { continue }
+        if ($trimmed -like '#' -or $trimmed -like '//*') { continue }
+        $safe.Add($i)
+    }
+    return $safe
+}
+
 $canonicalKey = $canonical -replace '\s', ''
 
 foreach ($item in $Path) {
@@ -51,10 +75,12 @@ foreach ($item in $Path) {
 
     $already = ($lines | Where-Object { ($_ -replace '\s', '') -like "*$canonicalKey*" }).Count
 
+    $safeLines = Get-SafeLines $lines
     $window = 0
     $inserted = 0
     $out = [System.Collections.Generic.List[string]]::new()
-    foreach ($line in $lines) {
+    for ($index = 0; $index -lt $lines.Count; $index++) {
+        $line = $lines[$index]
         $stripped = $line -replace '\s', ''
         $isWatermark = $stripped -like "*$canonicalKey*"
         $out.Add($line)
@@ -62,18 +88,19 @@ foreach ($item in $Path) {
         $window++
         if ($window -ge 50) {
             $window = 0
-            $out.Add(("{0}{1}" -f $CommentPrefix, (New-RenderedWatermark $canonical)))
-            $inserted++
+            # Place the watermark at the next safe line at or after this boundary.
+            $target = $safeLines | Where-Object { $_ -ge $index } | Select-Object -First 1
+            if ($null -ne $target) {
+                $out.Add(("{0}{1}" -f $CommentPrefix, (New-RenderedWatermark $canonical)))
+                $inserted++
+            }
         }
     }
 
     if ($inserted -eq 0 -and $already -eq 0) {
         # Short file: place a single watermark at a random eligible line.
         $out = [System.Collections.Generic.List[string]]::new()
-        $eligible = @()
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            if (-not [string]::IsNullOrWhiteSpace($lines[$i])) { $eligible += $i }
-        }
+        $eligible = @($safeLines)
         if ($eligible.Count -eq 0) { Write-Warning "skip (empty): $file"; continue }
         $target = $eligible[(Get-Random -Minimum 0 -Maximum $eligible.Count)]
         for ($i = 0; $i -lt $lines.Count; $i++) {
