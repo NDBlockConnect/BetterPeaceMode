@@ -5,6 +5,42 @@
 
 ---
 
+## {FACTTime: 2026.10.02-19:50:00} Loader19_3Verified {FACTNum 5}
+
+GitCommitHashRange: chore/loader-0.19.3-compat (unmerged)
+
+Files:
+```
+.\gradle.properties +2 -2
+.\src\main\resources\fabric.mod.json +2 -2
+```
+
+### What's Happened?
+The mod previously demanded Fabric Loader 0.19.5 even though nothing in it uses a 0.19.4+ API, which
+excluded every instance pinned to 0.19.3.
+
+### Any evidence?
+Built against `loader_version=0.19.3` and launched on both sides:
+
+| Target | Result |
+|---|---|
+| Client instance created with `--loader-version 0.19.3` | `fabricloader 0.19.3`, `betterpeacemode 26.0.0-Alpha.3`, `[BetterPeaceMode] loaded`, reached the main menu, no mixin errors |
+| Dedicated server with the 0.19.3 Fabric server launcher | `fabricloader 0.19.3`, `[BetterPeaceMode] loaded`, `Done (1.089s)!`, no mixin errors |
+
+Fabric API stayed at `0.141.6+1.21.11` throughout.
+
+### Solutions
+The metadata floor is now `>=0.19.3` and the API dependency is pinned to `>=0.141.6`, and the build
+compiles against 0.19.3 so any accidental use of a newer loader API fails at build time instead of at
+runtime.
+
+### FACTs
+Declare the oldest loader you actually support and compile against it.
+
+version: v26.0-Alpha.3
+
+***
+
 ## {FACTTime: 2026.10.02-17:45:00} UniversalRetaliationVerified {FACTNum 4}
 
 GitCommitHashRange: feat/universal-retaliation-and-reinforcements (unmerged)

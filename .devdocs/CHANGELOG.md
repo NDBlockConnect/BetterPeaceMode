@@ -8,6 +8,29 @@
 
 ---
 
+## {ChangeTime: 2026.10.02-19:50:00} LoaderAndFabricApiCompatibility
+
+GitCommitHash: chore/loader-0.19.3-compat
+
+ChangedFiles:
+```
+.\gradle.properties +2 -2
+.\src\main\resources\fabric.mod.json +2 -2
+.\README.md +2 -2
+.\README.zh.md +2 -2
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|fabric.mod.json|Lower the Fabric Loader requirement from >=0.19.5 to >=0.19.3 and pin Fabric API to >=0.141.6|2026.10.02-19:50:00|StarsailsClover
+2|gradle.properties|Build against loader 0.19.3 so the compile classpath matches the oldest supported loader, and bump to v26.0-Alpha.3|2026.10.02-19:50:00|StarsailsClover
+3|README.md README.zh.md|Document the lowered loader floor|2026.10.02-19:50:00|StarsailsClover
+
+version: v26.0-Alpha.3
+
+---
+
 ## {ChangeTime: 2026.10.02-17:50:00} UniversalRetaliationAndReinforcements
 
 GitCommitHash: feat/universal-retaliation-and-reinforcements

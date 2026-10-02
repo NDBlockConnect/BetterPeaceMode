@@ -107,11 +107,11 @@ $env:JAVA_HOME = "<一个 JDK 25>"    # Loom 1.18 需要 JDK 25 运行
 .\gradlew.bat build                 # 模组本身仍以 Java 21 为目标
 ```
 
-产物：`build/libs/BetterPeaceMode-v26.0-Alpha.2-JE-1.21.11-Fabric.jar`。
+产物：`build/libs/BetterPeaceMode-v26.0-Alpha.3-JE-1.21.11-Fabric.jar`。
 
 ## 7 兼容性
 
-- Minecraft 1.21.11，Fabric Loader 0.19.5+ 与 Fabric API（指令接口使用 Fabric 的指令回调）。
+- Minecraft 1.21.11，Fabric Loader 0.19.3+ 与 Fabric API（指令接口使用 Fabric 的指令回调）。
 - 客户端与专用服务器均可用；规则从通用入口点装载。
 - 可与其他模组共存：补丁只针对众所周知的少量原版方法，且当模式为 `vanilla` 时全部为空操作。
 
