@@ -136,11 +136,11 @@ $env:JAVA_HOME = "<a JDK 25>"      # Loom 1.18 needs JDK 25 to run
 .\gradlew.bat build                # the mod itself still targets Java 21
 ```
 
-Output: `build/libs/BetterPeaceMode-v26.0-Alpha.2-JE-1.21.11-Fabric.jar`.
+Output: `build/libs/BetterPeaceMode-v26.0-Alpha.3-JE-1.21.11-Fabric.jar`.
 
 ## 7 Compatibility
 
-- Minecraft 1.21.11, Fabric Loader 0.19.5+ and Fabric API (the command surface uses the Fabric
+- Minecraft 1.21.11, Fabric Loader 0.19.3+ and Fabric API (the command surface uses the Fabric
   command callback).
 - Client and dedicated server both work; the rules are installed from the common entry point.
 - Works alongside other mods. The patches touch only well-known vanilla methods and become no-ops
