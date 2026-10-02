@@ -10,7 +10,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Single damage funnel for both peace modes.
@@ -22,41 +23,45 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  *
  * <p>Responsibilities:
  * <ul>
- *   <li>Refuse hits that would start a fight (friendly-versus-friendly in Better Peace, anything
+ *   <li>Cancel hits that would start a fight (friendly-versus-friendly in Better Peace, anything
  *       unprovoked in Real Peace).</li>
- *   <li>For a hit that does land, record the one-to-one grudge in both directions, then hand the
- *       victim the means to fight back and let it call help if the operator enabled that.</li>
+ *   <li>For a hit that does land, record the grudge in both directions, then hand the victim the
+ *       means to fight back and let it call help if the operator enabled that.</li>
  * </ul>
  */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
 
-    @ModifyVariable(method = "hurtServer", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private float betterpeacemode$gateDamage(float amount, ServerLevel level, DamageSource source) {
+    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
+    private void betterpeacemode$gateDamage(
+            ServerLevel level, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         if (level.isClientSide()) {
-            return amount;
+            return;
         }
         // Environmental damage, self-damage and non-living sources keep vanilla behaviour.
         LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : null;
         if (attacker == null || attacker == self) {
-            return amount;
+            return;
         }
         if (!PeacePolicy.anyModeActive()) {
-            return amount;
+            return;
         }
         if (PeacePolicy.shouldRefuseDamage(attacker, self)) {
-            // Refused hits must not establish a grudge either, otherwise the act of being attacked
-            // would itself be what provokes the fight.
-            return 0.0F;
+            // Zeroing the amount is not enough. Vanilla's hurt path has no "amount <= 0" exit, so a
+            // zeroed hit would still consume the invulnerability window, run the knockback, and -
+            // the part that used to break Real Peace - call resolveMobResponsibleForDamage, which
+//Git  Hub@N  DB lockCon  nect | Bl o c k  C onn ect@Star sa ils Clover
+            // records the victim's anger toward the slime that merely touched it. That anger was
+            // then read back as a live grudge, so the next touch landed real damage and both sides
+            // started recruiting. Cancelling the hit leaves no trace at all.
+            cir.setReturnValue(false);
+            return;
         }
         ProvocationLedger.recordMutualGrudge(self, attacker);
-//Git  H  ub@N  DB  lo  c k  C  on n ect | Bl  oc  kConn  ect@ S tars a ils  Clo v  e  r
         if (PeacePolicy.realPeaceActive() && self instanceof Mob selfMob) {
             RetaliationManager.onProvoked(selfMob, attacker);
             ReinforcementManager.onProvoked(selfMob, attacker);
         }
-        return amount;
     }
-    //GitHub@NDBlockConnect | BlockConnect@StarsailsClover
 }

@@ -51,6 +51,23 @@ Better Peace, plus hostile mobs are allowed back:
   still alive it keeps topping the group up on a randomised 10-30 s schedule, reaching twice the
   radius, and replenishment arrivals carry randomised Speed II-V and Strength I-III. Once every
   member has died the group is dropped and the calls stop.
+- **One group per enemy, shared by every race.** A hate group belongs to the entity being fought,
+  not to the caller: any mob provoked by the same attacker joins the fight that already exists
+  instead of opening a second one. Four zombies that a player hits in the same brawl therefore form
+  one group of four plus seven helpers, not four groups of eight.
+- **The area around a call has an entity budget.** Before spawning helpers the mod counts the mobs
+  in a chunk-aligned area around the caller (one chunk by default, or the whole server simulation
+  distance if you prefer) and refuses to add more once the configured maximum is reached. A
+  saturated area - a full animal pen, a village, a mob farm - simply stops producing helpers until
+  something dies.
+- **Super reinforcements (optional).** With `superReinforcements` enabled every helper arrives with
+  double maximum health and indefinite Resistance, Regeneration and Fire Resistance on top of the
+  normal replenishment buffs. Vanilla refuses Regeneration on undead helpers, so zombies and
+  skeletons keep the other two.
+- **Parents guard their young.** Any adult of the same species within 16 blocks of a baby hates
+  whatever living entity comes within 4 blocks of that baby, and attacks it - a cow will charge the
+  wolf that walked up to its calf. Siblings and herd mates are never treated as threats, and
+  creative or spectator players are ignored so a parent cannot lock onto someone it can never hurt.
 - Nether mobs stay calm outside the Nether and do not mutate: piglins do not turn into zombified
   piglins and hoglins do not turn into zoglins, and while they are away from home they will not
   start a fight - though they will still retaliate if attacked.
@@ -58,7 +75,8 @@ Better Peace, plus hostile mobs are allowed back:
 - The player keeps the Peaceful regeneration rate (1 HP and 1 saturation per second while hurt),
   which the Hard difficulty alone would not provide.
 - Attacks that never go through AI target selection are covered too: a slime or a pufferfish hurts
-  whatever it touches, and those contact hits are refused while the creature is unprovoked.
+  whatever it touches, and those contact hits are cancelled outright while the creature is
+  unprovoked - no damage, no knockback, no invulnerability window, and no grudge.
 
 ## 3 Configuration
 
@@ -80,7 +98,13 @@ Better Peace, plus hostile mobs are allowed back:
   "reinforcementRadius": 16.0,
   "autoReinforce": true,
   "autoReinforceMaxSeconds": 30,
-  "autoReinforceRadiusMultiplier": 2.0
+  "autoReinforceRadiusMultiplier": 2.0,
+  "areaLimitEnabled": true,
+  "areaLimitRadiusChunks": 1,
+  "areaLimitUseSimulationDistance": false,
+  "areaLimitMaxEntities": 24,
+  "superReinforcements": false,
+  "babyGuardEnabled": true
 }
 ```
 
@@ -100,6 +124,12 @@ Better Peace, plus hostile mobs are allowed back:
 | `autoReinforce` | Keep topping the group up while any member is alive. |
 | `autoReinforceMaxSeconds` | Upper bound of the randomised delay between automatic calls (min 10 s). |
 | `autoReinforceRadiusMultiplier` | Automatic calls reach this many times further than the initial call. |
+| `areaLimitEnabled` | Refuse reinforcement spawns once the area around the caller is saturated. |
+| `areaLimitRadiusChunks` | Radius of that area in chunks; `0` is the caller's own chunk, `1` the surrounding 3x3. |
+| `areaLimitUseSimulationDistance` | Use the server's whole simulation distance instead of the fixed radius. |
+| `areaLimitMaxEntities` | Mobs allowed inside the area before further helper spawns are refused. |
+| `superReinforcements` | Helpers arrive with double health and indefinite Resistance, Regeneration and Fire Resistance. |
+| `babyGuardEnabled` | Adults hate anything that comes within 4 blocks of a baby of their own species. |
 
 ## 4 Commands
 
@@ -123,10 +153,17 @@ The mode is expressed as a small set of vanilla entry points rather than as a re
 
 - Target acquisition (`Mob#setTarget`, plus the four subclasses that override it - fox, creeper,
   enderman and zombified piglin) is gated, which stops a mob from ever starting a pursuit.
-- Damage application (`LivingEntity#hurtServer`) is gated, which stops friendly-versus-friendly hits
-  from landing and records the one-to-one grudge in both directions.
+- Damage application (`LivingEntity#hurtServer`) is gated, which cancels friendly-versus-friendly and
+  unprovoked hits before any of vanilla's hurt bookkeeping runs, and records the one-to-one grudge in
+  both directions for the hits that do land.
 - A once-per-second server sweep re-checks live targets, pins the difficulty for the active mode,
-  keeps Nether mobs from mutating, and bounds the cost to a fixed budget.
+  keeps Nether mobs from mutating, prunes expired grudges and bounds the cost to a fixed budget. A
+  faster pass on the same sweep drives the baby guard.
+- The grudge itself is kept by the mod rather than by vanilla's `lastHurtByMob`, because vanilla
+  forgets that field after 100 ticks and would silently cap the configured window at five seconds.
+- `SpearUseGoal#tick` is guarded against a null target. 1.21.11 hands zombies and zombified piglins
+  that goal, and vanilla's `MeleeAttackGoal#stop` clears the target when it is displaced, which
+  crashes the server when it happens to a zombie that is fighting a creative-mode player.
 - Zombie reinforcements are pinned to zero so no fight can escalate into a swarm.
 
 ## 6 Build
@@ -136,7 +173,7 @@ $env:JAVA_HOME = "<a JDK 25>"      # Loom 1.18 needs JDK 25 to run
 .\gradlew.bat build                # the mod itself still targets Java 21
 ```
 
-Output: `build/libs/BetterPeaceMode-v26.0-Alpha.3-JE-1.21.11-Fabric.jar`.
+Output: `build/libs/BetterPeaceMode-v26.0-Alpha.4-JE-1.21.11-Fabric.jar`.
 
 ## 7 Compatibility
 

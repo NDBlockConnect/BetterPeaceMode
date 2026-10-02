@@ -53,8 +53,26 @@ public final class BetterPeaceCommand {
                         cfg.realPeace,
                         dev.blockconnect.betterpeacemode.core.PeacePolicy.targetDifficulty(),
                         cfg.keepBossHostile,
+//G  itHub@NDBlo ckCo  n  n ec t | Bloc  kC onnect@St a  rsail  sCl over
 //GitHub@ ND Bloc  kConnect | BlockConn e ct@Sta  r  sail  sC lo ve  r
                         cfg.aggroDurationTicks)),
+                false);
+        context.getSource().sendSuccess(() -> Component.literal(String.format(
+                        Locale.ROOT,
+                        "[BetterPeaceMode] reinforcements=%s count=%d radius=%.1f auto=%s maxDelay=%ds autoRadius=x%.1f"
+                                + " super=%s areaLimit=%s areaChunks=%d areaMax=%d areaFollowsRenderDistance=%s babyGuard=%s",
+                        cfg.reinforcementsEnabled,
+                        cfg.reinforcementCount,
+                        cfg.reinforcementRadius,
+                        cfg.autoReinforce,
+                        cfg.autoReinforceMaxSeconds,
+                        cfg.autoReinforceRadiusMultiplier,
+                        cfg.superReinforcements,
+                        cfg.areaLimitEnabled,
+                        cfg.areaLimitRadiusChunks,
+                        cfg.areaLimitMaxEntities,
+                        cfg.areaLimitUseSimulationDistance,
+                        cfg.babyGuardEnabled)),
                 false);
         return 1;
     }

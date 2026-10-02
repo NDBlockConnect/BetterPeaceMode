@@ -13,7 +13,8 @@
     "LivingEntityMixin",
     "ServerPlayerMixin",
     "ServerLevelMixin",
-    "ZombieMixin"
+    "ZombieMixin",
+    "SpearUseGoalMixin"
   ],
   "injectors": {
     "defaultRequire": 1

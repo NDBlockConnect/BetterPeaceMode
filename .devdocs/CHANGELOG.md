@@ -8,6 +8,47 @@
 
 ---
 
+## {ChangeTime: 2026.10.03-06:50:00} StabilityAndReinforcementContainment
+
+GitCommitHash: feat/alpha4-stability-and-reinforcement-rules
+
+ChangedFiles:
+```
+.\gradle.properties +2 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\LivingEntityMixin.java +13 -8
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\SpearUseGoalMixin.java +49 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ProvocationLedger.java +68 -12
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +87 -64
+.\src\main\java\dev\blockconnect\betterpeacemode\core\HateGroup.java +27 -19
+.\src\main\java\dev\blockconnect\betterpeacemode\core\BabyGuardManager.java +86 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeaceSweep.java +6 -1
+.\src\main\java\dev\blockconnect\betterpeacemode\config\BetterPeaceModeConfig.java +38 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\BetterPeaceModeConfigScreen.java +123 -96
+.\src\main\java\dev\blockconnect\betterpeacemode\command\BetterPeaceCommand.java +18 -0
+.\src\main\resources\betterpeacemode.mixins.json +1 -1
+.\README.md +28 -4
+.\README.zh.md +28 -4
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|SpearUseGoalMixin.java|Fix: cancel `SpearUseGoal#tick` when its target is null - the crash the owner hit when a zombie fighting a creative player picked up a spear|2026.10.03-06:40:00|StarsailsClover
+2|LivingEntityMixin.java|Fix: cancel refused hits instead of zeroing their damage, so contact damage no longer leaves anger, knockback or an invulnerability window behind|2026.10.03-06:10:00|StarsailsClover
+3|ProvocationLedger.java|Fix: keep grudges in the mod instead of vanilla's `lastHurtByMob`, which vanilla clears after 100 ticks and which silently capped `aggroDurationTicks` at five seconds|2026.10.03-05:50:00|StarsailsClover
+4|ReinforcementManager.java Feature: one shared hate group per enemy; any race joins an existing group instead of opening a new one|2026.10.03-05:50:00|StarsailsClover
+5|ReinforcementManager.java Feature: chunk-aligned area entity budget (`areaLimit*`) that refuses helper spawns once the area is saturated|2026.10.03-05:50:00|StarsailsClover
+6|ReinforcementManager.java Feature: optional super reinforcements with doubled health and indefinite defensive effects|2026.10.03-05:50:00|StarsailsClover
+7|BabyGuardManager.java Feature: same-species adults hate whatever enters the four-block ring around a baby|2026.10.03-05:20:00|StarsailsClover
+8|HateGroup.java Change: groups carry the dimension and an anchor position so joining is decided by enemy and distance|2026.10.03-05:00:00|StarsailsClover
+9|PeaceSweep.java Change: prune expired grudges once per sweep and drive the baby guard on a faster 5-tick cadence|2026.10.03-05:00:00|StarsailsClover
+10|BetterPeaceModeConfig.java BetterPeaceModeConfigScreen.java BetterPeaceCommand.java|Change: expose the six new settings, split the configuration screen into Rules and Reinforcements pages, and print the new values in `/betterpeace status`|2026.10.03-05:00:00|StarsailsClover
+11|README.md README.zh.md|Docs: the new containment rules, the corrected contact-damage description and the new configuration fields|2026.10.03-06:45:00|StarsailsClover
+
+version: v26.0-Alpha.4
+
+---
+
 ## {ChangeTime: 2026.10.02-19:50:00} LoaderAndFabricApiCompatibility
 
 GitCommitHash: chore/loader-0.19.3-compat
