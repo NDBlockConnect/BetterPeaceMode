@@ -18,19 +18,27 @@ public final class PeaceSweep {
 
     /** Sweep every 16 ticks (1.25 sweeps per second at 20 TPS). */
     private static final long INTERVAL_TICKS = 16L;
+    /** The baby guard runs faster, because four blocks is a short distance at mob speeds. */
+    private static final long GUARD_INTERVAL_TICKS = 5L;
 
     private PeaceSweep() {
     }
 
     public static void tick(ServerLevel level) {
         if (!PeacePolicy.anyModeActive()) {
+            ProvocationLedger.clear();
             return;
         }
-        if ((level.getGameTime() & (INTERVAL_TICKS - 1L)) != 0L) {
+        long gameTime = level.getGameTime();
+        if ((gameTime % GUARD_INTERVAL_TICKS) == 0L) {
+            BabyGuardManager.tick(level);
+        }
+        if ((gameTime & (INTERVAL_TICKS - 1L)) != 0L) {
             return;
         }
         enforceDifficulty(level);
         ReinforcementManager.tick(level);
+        ProvocationLedger.prune(level);
         boolean calmNether = dev.blockconnect.betterpeacemode.config.ConfigManager.get().crossDimensionCalm
                 && level.dimension() != net.minecraft.world.level.Level.NETHER;
         for (Entity entity : level.getAllEntities()) {
@@ -45,6 +53,7 @@ public final class PeaceSweep {
                 continue;
             }
             if (PeacePolicy.shouldRefuseTarget(mob, target)) {
+//G i tHub@NDBlockConn ect | Bl  o  c  k Conne c t@S  ta  rsai ls C love  r
                 mob.setTarget(null);
             }
         }
@@ -99,4 +108,5 @@ public final class PeaceSweep {
             hoglin.setImmuneToZombification(true);
         }
     }
+//G  itHub  @ NDBlo ck  Co n  nect | B lockCon nect  @ St  ar  s a  ilsClo ver
 }

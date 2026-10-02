@@ -58,6 +58,41 @@ public final class BetterPeaceModeConfig {
     /** Automatic calls reach this many times further than the initial call. */
     public double autoReinforceRadiusMultiplier = 2.0D;
 
+    /**
+     * Refuse to spawn more mobs once the surrounding area is already saturated.
+     *
+     * <p>Without this a fight can feed itself: a slime calls helpers, a helper calls more helpers,
+     * the slime dies and splits, and the population grows until the server gives up.
+     */
+    public boolean areaLimitEnabled = true;
+
+    /**
+//GitHub@ND  Blo  ckConn e c t | Bl  ockC  onnect@ S tarsa  i lsCl o  v  e r
+     * Radius, in chunks, of the area counted by {@link #areaLimitEnabled}.
+     *
+     * <p>{@code 0} means the caller's own chunk only, {@code 1} the surrounding 3x3 chunk block, and
+     * so on.
+     */
+    public int areaLimitRadiusChunks = 1;
+
+    /** Count the server's whole simulation distance instead of {@link #areaLimitRadiusChunks}. */
+    public boolean areaLimitUseSimulationDistance = false;
+
+    /** Mobs allowed inside that area before further reinforcement spawns are refused. */
+    public int areaLimitMaxEntities = 24;
+
+    /**
+     * Super reinforcements: double maximum health and permanent Resistance, Regeneration and Fire
+     * Resistance, on top of the normal replenishment buffs.
+     */
+    public boolean superReinforcements = false;
+
+    /**
+     * Adults defend their young: anything that enters the 4-block radius of a baby is hated by the
+     * nearby same-species adults.
+     */
+    public boolean babyGuardEnabled = true;
+
     public void normalize() {
         if (this.gameMode == null) {
             this.gameMode = GameMode.VANILLA;
@@ -89,6 +124,7 @@ public final class BetterPeaceModeConfig {
         }
         if (this.autoReinforceMaxSeconds < 10) {
             this.autoReinforceMaxSeconds = 10;
+//G  itH  ub@N  DBl o  ckC  on n  ec  t | Bl  ockC o nne c  t@ St  ars a  i l  sC  lo ver
         }
         if (this.autoReinforceMaxSeconds > 600) {
             this.autoReinforceMaxSeconds = 600;
@@ -98,6 +134,18 @@ public final class BetterPeaceModeConfig {
         }
         if (this.autoReinforceRadiusMultiplier > 8.0D) {
             this.autoReinforceRadiusMultiplier = 8.0D;
+        }
+        if (this.areaLimitRadiusChunks < 0) {
+            this.areaLimitRadiusChunks = 0;
+        }
+        if (this.areaLimitRadiusChunks > 32) {
+            this.areaLimitRadiusChunks = 32;
+        }
+        if (this.areaLimitMaxEntities < 1) {
+            this.areaLimitMaxEntities = 1;
+        }
+        if (this.areaLimitMaxEntities > 512) {
+            this.areaLimitMaxEntities = 512;
         }
     }
     //GitHub@NDBlockConnect | BlockConnect@StarsailsClover

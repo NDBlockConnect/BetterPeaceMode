@@ -5,6 +5,196 @@
 
 ---
 
+## {FACTTime: 2026.10.03-06:40:00} SpearUseGoalCrashReproduced {FACTNum 9}
+
+GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\SpearUseGoalMixin.java +49 -0
+.\src\main\resources\betterpeacemode.mixins.json +1 -1
+```
+
+### What's Happened?
+The owner reported "Reason: `minecraft:zombie` let the game crashed" after hitting a baby zombie.
+The crash report was found at
+`...\NeedsOfNature@StarsailsCloverCrk-Enhance, 1.21.11-fa\crash-reports\crash-2026-10-03_03.43.51-server.txt`.
+
+### Any evidence?
+Decoding the intermediary frames with `mappings.tiny` gave the exact call path:
+
+| Frame | Named |
+|---|---|
+| `class_12112.method_6268` | `SpearUseGoal.tick` |
+| `class_4135.method_6268` | `WrappedGoal.tick` |
+| `class_1355.method_38849` | `GoalSelector.tickRunningGoals` |
+| `class_1355.method_6275` | `GoalSelector.tick` |
+| `class_1308.method_6023` | `Mob.serverAiStep` |
+| `class_1642.method_5773` | `Zombie.tick` |
+
+`SpearUseGoal.tick` reads `LivingEntity livingEntity = this.mob.getTarget()` and then dereferences it
+without a null check; `Zombie.addBehaviourGoals` registers that goal at priority 2 and
+`ZombieAttackGoal` at priority 3. `MeleeAttackGoal.stop` clears the target **when the mob's target is
+a creative or spectator player**, and a `GoalSelector` pass that stops the melee goal and starts the
+spear goal in the same tick then ticks the spear goal with a null target.
+
+Reproduced against the published v26.0-Alpha.3 jar with a real client (`BpmTester`, creative) on the
+dedicated test server: provoke a plain zombie, let it start chasing, then hand it a copper spear with
+`/item replace entity ... weapon.mainhand`.
+
+| Build | Trigger | Result |
+|---|---|---|
+| v26.0-Alpha.3 | zombie chasing a creative player is given a copper spear mid-chase | server crash, `NullPointerException ... class_12112.method_6268(class_12112.java:85)`, identical frame-for-frame to the owner's report |
+| v26.0-Alpha.4 | the same sequence, repeated with 6 spear give/remove cycles | no exception in the log, server stays up, zombie keeps fighting |
+
+### Any Founds?
+The crash is a vanilla 1.21.11 defect, but Real Peace reaches it far more often than vanilla does,
+because a provoked mob is handed a target directly instead of acquiring one through
+`HurtByTargetGoal`, which makes the two goals churn against each other.
+
+### Solutions
+`SpearUseGoalMixin` cancels `tick` at HEAD when the mob has no target. The goal's own cleanup pass
+stops it on the following tick, because `canContinueToUse` also requires a live target; the mob
+takes no damage and keeps fighting.
+
+### FACTs
+A crash whose stack contains no mod frames can still be caused by the mod's state; read the vanilla
+goal ordering before concluding otherwise.
+
+version: v26.0-Alpha.4
+
+---
+
+## {FACTTime: 2026.10.03-06:10:00} ContactDamageStillLanded {FACTNum 8}
+
+GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\LivingEntityMixin.java +13 -8
+```
+
+### What's Happened?
+The owner reported that slime contact damage was still happening, and that a slime touching an iron
+golem escalated into an endless helper spiral. Both traced back to the same mistake in the Alpha.2
+damage gate.
+
+### Any evidence?
+`LivingEntity.hurtServer` has no `amount <= 0` early exit; the Alpha.2 hook only rewrote the amount to
+`0.0F`, so the rest of the pipeline still ran:
+
+```java
+this.invulnerableTime = 20;                 // the victim lost its i-frame window
+... this.knockback(0.4F, d, e);             // and was still pushed around
+this.resolveMobResponsibleForDamage(damageSource);  // -> setLastHurtByMob(attacker)
+```
+
+That last line is what broke Real Peace: a refused slime touch still set the victim's
+`lastHurtByMob`, which the ledger then read back as a live grudge, so the *next* touch landed real
+damage and both sides started recruiting.
+
+### Solutions
+The gate now injects at HEAD with `cancellable = true` and returns `false` from `hurtServer`, so a
+refused hit leaves no trace at all.
+
+Verified on the dedicated server (Real Peace): a size-3 slime was left pushing an iron golem for
+12 s.
+
+| Check | Alpha.2 behaviour (predicted) | Alpha.4 result |
+|---|---|---|
+| Iron golem health | would drop, then escalate | stays 100.0 |
+| Iron golem count | would grow to 8 | stays 1 |
+| Slime count | would grow as golems killed slimes | stays 1 |
+
+### FACTs
+In 1.21.11 an "unprovoked" hit must be cancelled, not zeroed; zero damage is still a hit.
+
+version: v26.0-Alpha.4
+
+---
+
+## {FACTTime: 2026.10.03-05:50:00} GrudgeWindowAndContainment {FACTNum 7}
+
+GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ProvocationLedger.java
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java
+.\src\main\java\dev\blockconnect\betterpeacemode\core\BabyGuardManager.java
+.\src\main\java\dev\blockconnect\betterpeacemode\core\HateGroup.java
+```
+
+### What's Happened?
+Three containment rules the owner asked for, plus a latent bug in the grudge window.
+
+### Any evidence?
+1. `LivingEntity.tick` clears `lastHurtByMob` after 100 ticks, so the configured
+   `aggroDurationTicks = 600` never took effect; the ledger now keeps its own expiry per
+   (mob, enemy) pair and only uses vanilla memory as an additional source.
+2. Groups are now found by enemy instead of by caller.
+3. A chunk-aligned area census bounds helper spawning, and super helpers get doubled health.
+
+Measured on the dedicated server, Real Peace, Hard:
+
+| Test | Setup | Result |
+|---|---|---|
+| Reinforcement size | one zombie provoked by an invulnerable armour stand | 8 zombies = caller + 7 |
+| Area cap | `areaLimitMaxEntities = 6`, one zombie provoked | 6 zombies, spawns stop at the cap |
+| Group merge | 4 zombies provoked by the same enemy, cap off | 11 zombies (4 + 7), stable after 35 s - not 4x8 |
+| Super reinforcements | `superReinforcements = true` | helper cow `Health = 20.0f` (base 10), indefinite `regeneration`, `resistance`, `fire_resistance` |
+| Grudge window | provoked sheep/cow pair observed for 12 s | damage continues past tick 100 with no re-provocation |
+
+Zombie helpers only received `resistance` and `fire_resistance`: vanilla's `canBeAffected` refuses
+Regeneration on undead mobs, which is correct and documented rather than worked around.
+
+### Any Founds?
+An earlier test run showed damage apparently stopping after one hit. The cause was vanilla: an
+animal that has been hurt runs `PanicGoal` and flees, so a low-HP attacker only lands a hit when the
+fight happens to stay in reach. Not a defect in the retaliation path - recorded here so the next
+person does not chase it again.
+
+### FACTs
+Vanilla's own "how long does this mob remember being hit" field is measured in 100-tick units;
+anything configurable beyond that must be stored by the mod.
+
+version: v26.0-Alpha.4
+
+---
+
+## {FACTTime: 2026.10.03-05:20:00} BabyGuardVerified {FACTNum 6}
+
+GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\BabyGuardManager.java +86 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeaceSweep.java +6 -1
+```
+
+### What's Happened?
+Parents now hate anything that walks into the four-block ring around their baby.
+
+### Any evidence?
+Dedicated server, Real Peace, on a roofed stone platform (a first attempt at world height -60 gave a
+baby 6 points of damage that turned out to be suffocation from the summon position, not combat; the
+clean platform removed it).
+
+| Check | Setup | Result |
+|---|---|---|
+| Intruder is attacked | adult cow + baby cow + no-AI zombie 2 blocks from the baby | zombie 20.0 -> 17.06 -> 11.18 -> 8.24 -> 2.36 -> dead over 12 s |
+| Baby is safe | same run | baby stays at 100.0 the whole time |
+| Family is not a threat | adult cow + baby cow + second adult cow inside the ring | nothing attacks anything; all stay at full health |
+
+The 12-second run also demonstrates the grudge store outliving vanilla's 100-tick memory.
+
+### FACTs
+Four blocks is small enough that a per-second check misses fast mobs; the guard runs every 5 ticks.
+
+version: v26.0-Alpha.4
+
+---
+
 ## {FACTTime: 2026.10.02-19:50:00} Loader19_3Verified {FACTNum 5}
 
 GitCommitHashRange: chore/loader-0.19.3-compat (unmerged)
