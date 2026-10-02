@@ -53,6 +53,7 @@ public final class BetterPeaceCommand {
                         cfg.realPeace,
                         dev.blockconnect.betterpeacemode.core.PeacePolicy.targetDifficulty(),
                         cfg.keepBossHostile,
+//GitHub@ ND Bloc  kConnect | BlockConn e ct@Sta  r  sail  sC lo ve  r
                         cfg.aggroDurationTicks)),
                 false);
         return 1;

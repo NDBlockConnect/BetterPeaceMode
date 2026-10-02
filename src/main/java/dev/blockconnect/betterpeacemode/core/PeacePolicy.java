@@ -56,6 +56,7 @@ public final class PeacePolicy {
             return Difficulty.HARD;
         }
         if (friendlyPeaceActive()) {
+//G  it  Hub@NDB l o c  kC  onnec  t | Bloc  k Co  n nec  t@  S t  ar sa ilsClo  v  er
 //Git  H  ub @ NDB loc  k  C  onnect | Blo ck Co  nnect@Sta rs  a i l sCl  over
             return Difficulty.PEACEFUL;
         }
@@ -112,7 +113,8 @@ public final class PeacePolicy {
      * Whether a Nether-origin mob needs to be kept in its home dimension.
      *
      * <p>Nether mobs transform when they leave the Nether: a piglin becomes a zombified piglin, and
-//Gi t Hub @NDB lock C  o n  n e ct | Bloc  kCon  nect@Starsa  il sClov er
+//GitHu b  @N  DBl  ockCo  nn  ect | BlockC onnec t@St  arsail  sClover
+ * Gi t Hub @NDB lock C  o n  n e ct | Bloc  kCon  nect@Starsa  il sClov er
      * a hoglin becomes a zoglin. Real Peace keeps them from mutating in the overworld, which is
      * also what stops that transformation from turning them into an always-hostile creature.
      */
@@ -168,9 +170,91 @@ public final class PeacePolicy {
             }
             // Friendly mob versus friendly mob conflict never starts (the fox and the chicken, the
             // wolf and the sheep). Player-versus-mob is untouched.
+//Gi  tHu b@ND Blo ck C onnect | Block Co n  nect@S  tar sailsC l  over
 //GitHu  b@N D  Blo  ckConn ect | BlockConne c  t@  Starsa ilsC  l  ove  r
             return isFriendlyMob(attacker) && isFriendlyMob(living);
         }
         return false;
+    }
+
+    /** Whether provoked entities outside the vanilla combat roster are allowed to fight back. */
+    public static boolean universalRetaliation() {
+        return ConfigManager.get().universalRetaliation;
+    }
+
+    /**
+     * Whether a hit from {@code attacker} on {@code victim} must be refused.
+     *
+     * <p>This is the second half of the peace rules and the one that catches attacks which never go
+     * through {@code setTarget}: a slime hurts whatever it touches, and a pufferfish does the same,
+     * so gating only the AI target would leave those mobs freely attacking in Real Peace.
+     */
+    public static boolean shouldRefuseDamage(LivingEntity attacker, LivingEntity victim) {
+        if (attacker == null || attacker == victim) {
+            return false;
+        }
+        if (!anyModeActive()) {
+            return false;
+        }
+        // Players always strike first if they choose to; only mobs are restrained.
+        if (!(attacker instanceof Mob attackerMob)) {
+            return false;
+        }
+        if (isExemptBoss(attacker) || isExemptBoss(victim)) {
+            return false;
+        }
+        // An established fight is allowed in both directions: the attacker may be retaliating, or
+        // the victim may already have been provoked by it.
+        if (ProvocationLedger.hasLiveGrudge(attackerMob, victim)) {
+            return false;
+        }
+        if (victim instanceof Mob victimMob && ProvocationLedger.hasLiveGrudge(victimMob, attacker)) {
+            return false;
+        }
+        if (realPeaceActive()) {
+            // Nobody starts a fight in Real Peace - not hostile mobs, not neutral mobs, and not
+            // friendly mobs such as a wolf hunting a fox.
+            return true;
+        }
+        if (friendlyPeaceActive()) {
+            // Better Peace keeps its vanilla Peaceful semantics and only stops friendly mobs from
+            // hurting each other.
+            return isFriendlyMob(attacker) && isFriendlyMob(victim);
+        }
+        return false;
+    }
+
+    /**
+//GitHub @ ND B  loc  kCon  nect | BlockC onnec  t@St  arsa  ilsClover
+     * The damage a provoked entity deals.
+     *
+     * <p>Mobs that ship an attack-damage attribute keep their own value, so a zombie still hits like
+     * a zombie. Everything else - cows, sheep, chickens, villagers and the rest of the peaceful
+     * roster, none of which even register that attribute - is assigned a value by size instead.
+     */
+    public static float retaliationDamage(LivingEntity entity) {
+        double base;
+        var attributes = entity.getAttributes();
+        if (attributes.hasAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)) {
+            base = attributes.getValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        } else {
+            base = 0.0D;
+        }
+        if (base < 1.0D) {
+            base = sizeBasedDamage(entity);
+        }
+        double scaled = base * ConfigManager.get().retaliationDamageMultiplier;
+        return (float) Math.max(1.0D, Math.min(scaled, 64.0D));
+    }
+
+    private static double sizeBasedDamage(LivingEntity entity) {
+        float health = entity.getMaxHealth();
+        if (health <= 10.0F) {
+            return 1.0D;
+        }
+        if (health <= 24.0F) {
+            return 2.0D;
+        }
+        return 3.0D;
     }
 }

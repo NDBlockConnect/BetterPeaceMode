@@ -42,12 +42,23 @@ Better Peace, plus hostile mobs are allowed back:
 - **Provocation creates a one-to-one grudge.** The moment an entity is actually hit, it remembers
   exactly who hit it and may retaliate against that entity and only that entity, for a bounded
   window (600 ticks by default). Hitting any entity therefore starts a fight.
+- **Every entity can fight back.** Hostile mobs already know how; cows, sheep, chickens, villagers
+  and every other peaceful mob are given the ability the first time they are provoked. Mobs that
+  ship an attack-damage value keep it, and the rest are assigned one by size (1 for small, 2 for
+  medium, 3 for large), scaled by `retaliationDamageMultiplier`.
+- **Provoked entities call for help.** By default the caller spawns up to 7 helpers of its own type
+  within 16 blocks, giving a hate group of 8 including itself. While any member of the group is
+  still alive it keeps topping the group up on a randomised 10-30 s schedule, reaching twice the
+  radius, and replenishment arrivals carry randomised Speed II-V and Strength I-III. Once every
+  member has died the group is dropped and the calls stop.
 - Nether mobs stay calm outside the Nether and do not mutate: piglins do not turn into zombified
   piglins and hoglins do not turn into zoglins, and while they are away from home they will not
   start a fight - though they will still retaliate if attacked.
 - Hard difficulty's zombie reinforcement swarm is disabled, so combat stays strictly one-to-one.
 - The player keeps the Peaceful regeneration rate (1 HP and 1 saturation per second while hurt),
   which the Hard difficulty alone would not provide.
+- Attacks that never go through AI target selection are covered too: a slime or a pufferfish hurts
+  whatever it touches, and those contact hits are refused while the creature is unprovoked.
 
 ## 3 Configuration
 
@@ -61,7 +72,15 @@ Better Peace, plus hostile mobs are allowed back:
   "keepBossHostile": true,
   "hostilesIgnoreEachOther": true,
   "crossDimensionCalm": true,
-  "aggroDurationTicks": 600
+  "aggroDurationTicks": 600,
+  "universalRetaliation": true,
+  "retaliationDamageMultiplier": 1.0,
+  "reinforcementsEnabled": true,
+  "reinforcementCount": 7,
+  "reinforcementRadius": 16.0,
+  "autoReinforce": true,
+  "autoReinforceMaxSeconds": 30,
+  "autoReinforceRadiusMultiplier": 2.0
 }
 ```
 
@@ -73,6 +92,14 @@ Better Peace, plus hostile mobs are allowed back:
 | `hostilesIgnoreEachOther` | Keep hostile mobs from starting fights with each other. Turning it off still protects players, villagers and animals. |
 | `crossDimensionCalm` | Keep Nether mobs calm and unmutated away from the Nether. |
 | `aggroDurationTicks` | How long a one-to-one grudge lasts, clamped to 20-24000. |
+| `universalRetaliation` | Let every provoked entity fight back, including peaceful mobs that have no combat AI. |
+| `retaliationDamageMultiplier` | Scales the damage a provoked entity deals. |
+| `reinforcementsEnabled` | Let provoked entities call helpers of their own type. |
+| `reinforcementCount` | Helpers per call; the hate group caps at this value + 1 (the caller). |
+| `reinforcementRadius` | Radius, in blocks, of the initial call. |
+| `autoReinforce` | Keep topping the group up while any member is alive. |
+| `autoReinforceMaxSeconds` | Upper bound of the randomised delay between automatic calls (min 10 s). |
+| `autoReinforceRadiusMultiplier` | Automatic calls reach this many times further than the initial call. |
 
 ## 4 Commands
 
@@ -85,6 +112,10 @@ both work.
 | `/betterpeace mode <vanilla\|better_peace\|real_peace>` | Switch mode and persist it. |
 | `/betterpeace reload` | Re-read the config file from disk. |
 | `/betterpeace save` | Write the current in-memory config to disk. |
+
+In single-player the same settings are available from an in-game screen, opened with the mod's
+key binding (default `B`). On a dedicated server the client screen edits the local config, so
+operators should use the command or the server's config file instead.
 
 ## 5 How it works
 
@@ -105,7 +136,7 @@ $env:JAVA_HOME = "<a JDK 25>"      # Loom 1.18 needs JDK 25 to run
 .\gradlew.bat build                # the mod itself still targets Java 21
 ```
 
-Output: `build/libs/BetterPeaceMode-v26.0-Alpha.1-JE-1.21.11-Fabric.jar`.
+Output: `build/libs/BetterPeaceMode-v26.0-Alpha.2-JE-1.21.11-Fabric.jar`.
 
 ## 7 Compatibility
 

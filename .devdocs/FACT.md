@@ -5,6 +5,59 @@
 
 ---
 
+## {FACTTime: 2026.10.02-17:45:00} UniversalRetaliationVerified {FACTNum 4}
+
+GitCommitHashRange: feat/universal-retaliation-and-reinforcements (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\RetaliationManager.java +79 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +206 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\LivingEntityMixin.java +62 -0
+```
+
+### What's Happened?
+Three defects/gaps reported by the owner were confirmed against the shipped 1.21.11 bytecode and
+then fixed and verified in a live game.
+
+### Any evidence?
+Bytecode findings:
+
+1. `Wolf#registerGoals` ends with `NonTameRandomTargetGoal(Animal)`, so wolves hunt **every** animal
+   including foxes - the earlier claim in this document that wolves no longer hunt sheep was wrong
+   because it only inspected `NearestAttackableTargetGoal`.
+2. `Slime#playerTouch` calls `Slime#dealDamage`, which calls `victim.hurtServer(...)` directly. The
+   same is true of `Pufferfish#playerTouch`. Neither goes through `setTarget`, so gating target
+   selection alone cannot stop them.
+3. `Animal#createAnimalAttributes` only adds `TEMPT_RANGE`; animals do not register
+   `ATTACK_DAMAGE` at all, which is why a provoked cow could never hurt anything on its own.
+
+Live-game evidence (Fabric 1.21.11 dedicated server, real client `BpmTester`, Real Peace, Hard):
+
+| Check | Result |
+|---|---|
+| A size-3 slime sits on the player for 20 s | player health stays 200/200 (contact damage refused) |
+| Player hits a cow once | player health drops 200 -> 198.5 (the cow fights back) |
+| Cow count after the provocation | 1 -> **8** = caller + 7 reinforcements, matching the configured default |
+
+### Any Perjury?
+The first implementation recorded the grudge but gave peaceful mobs no way to act on it, and it
+gated only `setTarget`, which left slimes free to keep hurting players.
+
+### Solutions
+Damage is now funnelled through `PeacePolicy#shouldRefuseDamage`, so every damage path - AI melee,
+contact damage and anything else - passes the same "provoked or refused" test. Retaliation is driven
+from `Mob#tick` rather than by injecting AI goals, because Mixin forbids ordinary code from
+referencing classes that live in a declared mixin package.
+
+### FACTs
+Any claim about mob behaviour must be checked against every goal the class registers, not just the
+most obvious one.
+
+version: v26.0-Alpha.2
+
+***
+
 ## {FACTTime: 2026.10.02-13:40:00} RealPeaceVerified {FACTNum 3}
 
 GitCommitHashRange: uncommitted (first release)
@@ -107,8 +160,12 @@ shipped classes rather than by assumption.
 ### Any evidence?
 A scan of all 698 entity classes reported that only these declare `public void setTarget(LivingEntity)`:
 `Mob`, `Fox`, `Creeper`, `EnderMan` and `ZombifiedPiglin` (plus unrelated AI-helper classes).
-Separately, `Wolf#registerGoals` targets only `Player` and `AbstractSkeleton`, so wolves no longer
-hunt sheep in 1.21.11, while `Fox#registerGoals` targets `Animal` (which includes chickens).
+`Fox#registerGoals` targets `Animal` (which includes chickens).
+
+> Corrected by FACT 4: the claim originally recorded here - that wolves no longer hunt sheep - was
+> wrong. `Wolf#registerGoals` also registers `NonTameRandomTargetGoal(Animal)`, so wolves do hunt
+> foxes, sheep, chickens and every other animal. The code was already correct because Better Peace
+> suppresses friendly-mob-versus-friendly-mob conflict generically.
 
 ### Any Perjury?
 The first implementation assumed "patching `Mob#setTarget` covers every mob" and used a single

@@ -31,9 +31,12 @@
 - **任何敌对实体都不主动开战。** 僵尸、骷髅、苦力怕、蜘蛛、末影人、猪灵在未被挑衅时无视玩家、村民、动物以及彼此。
 - 末影龙与凋灵除外：它们保持敌对。
 - **挑衅会产生单体对单体的仇恨。** 任何实体一旦真正被打中，就会记住是谁打的，并且只对该实体进行有限时间的反击（默认 600 刻）。因此攻击任何实体都会引发战斗。
+- **任何实体都会反击。** 敌对生物本来就会战斗；牛、羊、鸡、村民等所有和平生物会在第一次被挑衅时获得反击能力。自带攻击力数值的生物沿用原值，其余按体型分配（小 1 / 中 2 / 大 3），并受 `retaliationDamageMultiplier` 缩放。
+- **被挑衅的实体会呼叫增援。** 默认在 16 格内呼叫 7 个同类型增援，加上呼叫者共 8 个成员。只要团内还有任一成员存活，就会按 10-30 秒的随机间隔继续补兵，补兵半径为初始半径的两倍，补兵成员随机获得速度 II-V 与力量 I-III。当团内成员全部阵亡时，停止呼叫并解散。
 - 下界生物离开下界后保持平静且不变异：猪灵不会变成僵尸猪灵，疣猪兽不会变成僵尸疣猪兽；在下界之外它们不会主动开战，但被攻击时依然会反击。
 - 困难难度的僵尸增援被关闭，保证战斗始终是单体对单体。
 - 玩家保留和平模式的回血速率（受伤时每秒 +1 生命值与 +1 饱和度），这是单纯困难难度不会提供的。
+- 不走 AI 目标选择的攻击也被覆盖：史莱姆、河豚等"碰到就伤害"的接触伤害，在未挑衅时会被拒绝。
 
 ## 3 配置
 
@@ -47,7 +50,15 @@
   "keepBossHostile": true,
   "hostilesIgnoreEachOther": true,
   "crossDimensionCalm": true,
-  "aggroDurationTicks": 600
+  "aggroDurationTicks": 600,
+  "universalRetaliation": true,
+  "retaliationDamageMultiplier": 1.0,
+  "reinforcementsEnabled": true,
+  "reinforcementCount": 7,
+  "reinforcementRadius": 16.0,
+  "autoReinforce": true,
+  "autoReinforceMaxSeconds": 30,
+  "autoReinforceRadiusMultiplier": 2.0
 }
 ```
 
@@ -59,6 +70,13 @@
 | `hostilesIgnoreEachOther` | 让敌对生物之间也不主动开战；关闭后仍然保护玩家、村民与动物。 |
 | `crossDimensionCalm` | 下界生物离开下界后保持平静且不变异。 |
 | `aggroDurationTicks` | 单体仇恨的持续时间，范围 20-24000。 |
+| `universalRetaliation` | 让任何被挑衅的实体都能反击，包括原本没有战斗 AI 的和平生物。 |
+| `retaliationDamageMultiplier` | 缩放被挑衅实体造成的伤害。 |
+| `reinforcementCount` | 每次呼叫的增援数量；仇恨团上限为该值 +1（含呼叫者）。 |
+| `reinforcementRadius` | 初始呼叫半径（格）。 |
+| `autoReinforce` | 团内仍有存活成员时持续补兵。 |
+| `autoReinforceMaxSeconds` | 自动补兵随机间隔的上限（最小 10 秒）。 |
+| `autoReinforceRadiusMultiplier` | 自动补兵半径相对初始半径的倍数。 |
 
 ## 4 指令
 
@@ -70,6 +88,8 @@
 | `/betterpeace mode <vanilla\|better_peace\|real_peace>` | 切换模式并落盘。 |
 | `/betterpeace reload` | 从磁盘重新读取配置。 |
 | `/betterpeace save` | 将内存中的配置写回磁盘。 |
+
+单机下也可用模组按键（默认 `B`）打开图形化配置界面；专用服务器上该界面只改本地配置，运营者请使用指令或服务器配置文件。
 
 ## 5 实现方式
 
@@ -87,7 +107,7 @@ $env:JAVA_HOME = "<一个 JDK 25>"    # Loom 1.18 需要 JDK 25 运行
 .\gradlew.bat build                 # 模组本身仍以 Java 21 为目标
 ```
 
-产物：`build/libs/BetterPeaceMode-v26.0-Alpha.1-JE-1.21.11-Fabric.jar`。
+产物：`build/libs/BetterPeaceMode-v26.0-Alpha.2-JE-1.21.11-Fabric.jar`。
 
 ## 7 兼容性
 

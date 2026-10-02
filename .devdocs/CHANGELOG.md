@@ -8,6 +8,44 @@
 
 ---
 
+## {ChangeTime: 2026.10.02-17:50:00} UniversalRetaliationAndReinforcements
+
+GitCommitHash: feat/universal-retaliation-and-reinforcements
+
+ChangedFiles:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeacePolicy.java +90 -12
+.\src\main\java\dev\blockconnect\betterpeacemode\core\RetaliationManager.java +79 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +206 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\HateGroup.java +61 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\LivingEntityMixin.java +62 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\MobMixin.java +16 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\config\BetterPeaceModeConfig.java +60 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\BetterPeaceModeClient.java +44 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\BetterPeaceModeConfigScreen.java +202 -0
+.\src\main\resources\assets\betterpeacemode\lang\en_us.json +5 -0
+.\src\main\resources\assets\betterpeacemode\lang\zh_cn.json +5 -0
+.\README.md +30 -2
+.\README.zh.md +30 -2
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|LivingEntityMixin.java|Fix: route every damage path through one refusal test so contact damage (slime, pufferfish) can no longer start a fight unprovoked|2026.10.02-17:50:00|StarsailsClover
+2|PeacePolicy.java|New: shouldRefuseDamage, retaliationDamage (attribute value or size-based fallback) and the universal-retaliation switch|2026.10.02-17:50:00|StarsailsClover
+3|RetaliationManager.java|New: tick-driven counter-attack so any provoked mob, including animals and villagers, actually fights back|2026.10.02-17:50:00|StarsailsClover
+4|ReinforcementManager.java|New: every entity type can call helpers, capped at count + 1, topped up on a randomised 10 s..max schedule with Speed II-V and Strength I-III|2026.10.02-17:50:00|StarsailsClover
+5|HateGroup.java|New: caller, helpers and the shared enemy as one bounded group|2026.10.02-17:50:00|StarsailsClover
+6|BetterPeaceModeConfig.java|New: recruitment, radius, count and auto-reinforce settings with clamping|2026.10.02-17:50:00|StarsailsClover
+7|BetterPeaceModeClient.java BetterPeaceModeConfigScreen.java|New: in-game configuration screen bound to a key (default B)|2026.10.02-17:50:00|StarsailsClover
+8|MobMixin.java|New: mob tick hook driving retaliation|2026.10.02-17:50:00|StarsailsClover
+9|FACT.md|Correction: wolves DO hunt foxes via NonTameRandomTargetGoal(Animal); the previous note was wrong|2026.10.02-17:50:00|StarsailsClover
+
+version: v26.0-Alpha.2
+
+---
+
 ## {ChangeTime: 2026.10.02-13:45:00} TwoPeaceModes
 
 GitCommitHash: initial

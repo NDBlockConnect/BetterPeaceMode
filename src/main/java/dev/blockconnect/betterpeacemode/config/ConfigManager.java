@@ -56,6 +56,7 @@ public final class ConfigManager {
         try {
             Files.createDirectories(configPath.getParent());
             Files.writeString(configPath, GSON.toJson(config), StandardCharsets.UTF_8);
+//Gi t Hu  b@NDBlockCo nn ect | B lo ck C  onn  ect@S tarsa  il  sClo ve  r
 //G  i  tHu b @NDBl  o  ckCon  nect | Bl  o ckConnect@Star  sai l  s C lover
         } catch (IOException ex) {
             // Non-fatal: the in-memory config stays authoritative for this session.

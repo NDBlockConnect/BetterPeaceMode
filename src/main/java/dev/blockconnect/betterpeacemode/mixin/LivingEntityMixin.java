@@ -2,6 +2,8 @@ package dev.blockconnect.betterpeacemode.mixin;
 
 import dev.blockconnect.betterpeacemode.core.PeacePolicy;
 import dev.blockconnect.betterpeacemode.core.ProvocationLedger;
+import dev.blockconnect.betterpeacemode.core.ReinforcementManager;
+import dev.blockconnect.betterpeacemode.core.RetaliationManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,20 +13,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 /**
- * Damage gate and grudge recorder for both peace modes.
+ * Single damage funnel for both peace modes.
  *
- * <p>This hooks the declaration site ({@code LivingEntity.hurtServer}) rather than {@code Mob},
- * because the damage funnel that records {@code lastHurtByMob} lives here and every subclass
- * reaches it through {@code super.hurtServer(...)}.
+ * <p>Hooks the declaration site ({@code LivingEntity.hurtServer}) rather than {@code Mob}, because
+ * that is where the method actually lives and every subclass reaches it through
+ * {@code super.hurtServer(...)}. Working at this level also catches damage that never goes through
+ * target acquisition at all - a slime or a pufferfish hurts whatever it touches.
  *
- * <p>Two responsibilities:
+ * <p>Responsibilities:
  * <ul>
- *   <li>Better Peace: refuse friendly-mob-versus-friendly-mob damage, so a fox cannot kill a
- *       chicken even though vanilla already committed the goal. Players are deliberately excluded
- *       on both sides — a player must always be able to hit a mob, and a mob may still defend
- *       against (or be hit by) a player.</li>
- *   <li>Both modes: every landed hit that is not blocked records a mutual one-to-one grudge, which
- *       is exactly what lets a provoked entity retaliate in Real Peace.</li>
+ *   <li>Refuse hits that would start a fight (friendly-versus-friendly in Better Peace, anything
+ *       unprovoked in Real Peace).</li>
+ *   <li>For a hit that does land, record the one-to-one grudge in both directions, then hand the
+ *       victim the means to fight back and let it call help if the operator enabled that.</li>
  * </ul>
  */
 @Mixin(LivingEntity.class)
@@ -44,22 +45,18 @@ public abstract class LivingEntityMixin {
         if (!PeacePolicy.anyModeActive()) {
             return amount;
         }
-        if (PeacePolicy.isExemptBoss(attacker) || PeacePolicy.isExemptBoss(self)) {
-            return amount;
-        }
-        if (PeacePolicy.friendlyPeaceActive()
-                && self instanceof Mob selfMob
-                && attacker instanceof Mob attackerMob
-                && PeacePolicy.isFriendlyMob(self)
-//G itHub @ND  B l o ck Connect | B loc  kConnec  t@  S ta  r  sail  sCl ove r
-                && PeacePolicy.isFriendlyMob(attacker)
-                && !ProvocationLedger.hasLiveGrudge(selfMob, attackerMob)) {
-            // Friendly mob versus friendly mob: the hit never lands.
+        if (PeacePolicy.shouldRefuseDamage(attacker, self)) {
+            // Refused hits must not establish a grudge either, otherwise the act of being attacked
+            // would itself be what provokes the fight.
             return 0.0F;
         }
-        // Everything else is a real hit and therefore a provocation: remember it in both
-        // directions so the victim can retaliate against its attacker, and only its attacker.
         ProvocationLedger.recordMutualGrudge(self, attacker);
+//Git  H  ub@N  DB  lo  c k  C  on n ect | Bl  oc  kConn  ect@ S tars a ils  Clo v  e  r
+        if (PeacePolicy.realPeaceActive() && self instanceof Mob selfMob) {
+            RetaliationManager.onProvoked(selfMob, attacker);
+            ReinforcementManager.onProvoked(selfMob, attacker);
+        }
         return amount;
     }
+    //GitHub@NDBlockConnect | BlockConnect@StarsailsClover
 }
