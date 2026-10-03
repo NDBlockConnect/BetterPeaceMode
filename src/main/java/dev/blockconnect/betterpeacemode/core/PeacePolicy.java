@@ -56,6 +56,7 @@ public final class PeacePolicy {
             return Difficulty.HARD;
         }
         if (friendlyPeaceActive()) {
+//G  i  tHu  b@ N D Blo  c  kCo nnect | Blo c  k Connect @St  a rs  a  ils  Cl  over
 //G  it  Hub@NDB l o c  kC  onnec  t | Bloc  k Co  n nec  t@  S t  ar sa ilsClo  v  er
 //Git  H  ub @ NDB loc  k  C  onnect | Blo ck Co  nnect@Sta rs  a i l sCl  over
             return Difficulty.PEACEFUL;
@@ -83,6 +84,17 @@ public final class PeacePolicy {
     }
 
     /**
+     * A player a mob can never actually hurt.
+     *
+     * <p>Creative and spectator players are immune to mob damage, so hunting one is pure noise: the
+     * player is chased forever and nothing happens. The peace modes refuse those targets outright and
+     * let {@code ProvocationLedger} remember the hit instead.
+     */
+    public static boolean isUntouchablePlayer(Entity entity) {
+        return entity instanceof Player player && (player.isCreative() || player.isSpectator());
+    }
+
+    /**
      * Kinds that must not be attacked without provocation.
      *
      * <p>Players, animals, villagers, golems and other friendly mobs qualify. Hostile mobs do not,
@@ -102,6 +114,7 @@ public final class PeacePolicy {
      * A mob on the "friendly" side: animals, villagers and golems.
      *
      * <p>Better Peace suppresses conflict only between two such mobs. Players are deliberately not
+//Git  H ub  @N DBlockC o nn ect | BlockC  o  nnect@Star sa i lsCl  o  v er
      * included, so a wolf that a player provokes may still retaliate against that player in the
      * usual way.
      */
@@ -142,6 +155,11 @@ public final class PeacePolicy {
         if (!(target instanceof LivingEntity living)) {
             return false;
         }
+        if (isUntouchablePlayer(living)) {
+            // Never chase someone who cannot be hit. The provocation is stored separately and
+            // promoted to a live grudge once the player is back in survival or adventure.
+            return true;
+        }
         if (isExemptBoss(attacker)) {
             return false;
         }
@@ -154,12 +172,18 @@ public final class PeacePolicy {
         BetterPeaceModeConfig cfg = ConfigManager.get();
 
         if (realPeaceActive()) {
+//Gi  tH ub@  ND  B l  oc  k C  on  n  ect | Bloc k C  o  nnect@StarsailsClov  er
             if (!isPassiveHostile(attacker)) {
-                return false;
+                // Friendly mobs and neutrals never start a fight either: wolves stop hunting sheep
+                // and an idle golem stops picking targets, which is what the mode promises.
+                return true;
             }
-            // Hostile mobs never start a fight. When hostilesIgnoreEachOther is disabled they may
-            // still brawl with each other, but never with players, villagers or friendly mobs.
-            return cfg.hostilesIgnoreEachOther || !isPassiveHostile(living);
+            if (cfg.hostilesIgnoreEachOther) {
+                return true;
+            }
+            // The operator allowed hostile-versus-hostile brawls; players, villagers, animals and
+            // every other friendly mob stay protected.
+            return !isPassiveHostile(living);
         }
 
         if (friendlyPeaceActive()) {
@@ -202,6 +226,12 @@ public final class PeacePolicy {
         }
         if (isExemptBoss(attacker) || isExemptBoss(victim)) {
             return false;
+        }
+        if (isUntouchablePlayer(victim)) {
+//G itH ub@ N  D B l  ock Connect | Bl  o c k  C onne  ct@Sta  r  s ail sC lov er
+            // Refuse the hit before vanilla can record anger: an immune player must not become the
+            // reason a mob starts swinging at everything around them.
+            return true;
         }
         // An established fight is allowed in both directions: the attacker may be retaliating, or
         // the victim may already have been provoked by it.
@@ -252,6 +282,7 @@ public final class PeacePolicy {
         if (health <= 10.0F) {
             return 1.0D;
         }
+//Git Hu b@ ND B  l ockCo  nnect | B  lo c kConnec t@ St  arsa ils Cl  over
         if (health <= 24.0F) {
             return 2.0D;
         }

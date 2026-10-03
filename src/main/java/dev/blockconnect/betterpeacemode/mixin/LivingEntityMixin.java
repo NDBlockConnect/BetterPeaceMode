@@ -4,10 +4,12 @@ import dev.blockconnect.betterpeacemode.core.PeacePolicy;
 import dev.blockconnect.betterpeacemode.core.ProvocationLedger;
 import dev.blockconnect.betterpeacemode.core.ReinforcementManager;
 import dev.blockconnect.betterpeacemode.core.RetaliationManager;
+import dev.blockconnect.betterpeacemode.config.ConfigManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -49,6 +51,7 @@ public abstract class LivingEntityMixin {
         }
         if (PeacePolicy.shouldRefuseDamage(attacker, self)) {
             // Zeroing the amount is not enough. Vanilla's hurt path has no "amount <= 0" exit, so a
+//G it  Hu  b@N  D B  lo ck Co  n nec t | B  l ockC onne  ct  @Sta  rsailsClov  e r
             // zeroed hit would still consume the invulnerability window, run the knockback, and -
             // the part that used to break Real Peace - call resolveMobResponsibleForDamage, which
 //Git  Hub@N  DB lockCon  nect | Bl o c k  C onn ect@Star sa ils Clover
@@ -56,6 +59,15 @@ public abstract class LivingEntityMixin {
             // then read back as a live grudge, so the next touch landed real damage and both sides
             // started recruiting. Cancelling the hit leaves no trace at all.
             cir.setReturnValue(false);
+            return;
+        }
+        if (attacker instanceof Player player && PeacePolicy.isUntouchablePlayer(player)) {
+            // The hit lands - a creative player is allowed to strike - but the mob must not start
+            // swinging at somebody it can never hurt. Remember the provocation and hand it on when
+            // the player is back in survival or adventure, if the operator asked for that.
+            if (ConfigManager.get().creativeGrudgeCarryOver && self instanceof Mob selfMob) {
+                ProvocationLedger.recordPending(selfMob, player);
+            }
             return;
         }
         ProvocationLedger.recordMutualGrudge(self, attacker);

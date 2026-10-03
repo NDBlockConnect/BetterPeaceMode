@@ -39,6 +39,11 @@ public final class PeaceSweep {
         enforceDifficulty(level);
         ReinforcementManager.tick(level);
         ProvocationLedger.prune(level);
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+            // One server-wide pass: waiting provocations become live grudges as soon as the player
+            // they belong to is hurtable again.
+            ProvocationLedger.promotePending(level.getServer());
+        }
         boolean calmNether = dev.blockconnect.betterpeacemode.config.ConfigManager.get().crossDimensionCalm
                 && level.dimension() != net.minecraft.world.level.Level.NETHER;
         for (Entity entity : level.getAllEntities()) {
@@ -48,6 +53,7 @@ public final class PeaceSweep {
             if (calmNether) {
                 keepNetherMobUntransformed(mob);
             }
+//G  itH u  b@ NDBlock Con nect | B  l o  c kCo  nn ect @St ars ai  l  sClo  ver
             LivingEntity target = mob.getTarget();
             if (target == null) {
                 continue;
@@ -103,6 +109,7 @@ public final class PeaceSweep {
             return;
         }
         if (mob instanceof AbstractPiglin piglin) {
+//Git Hub@ NDBlo ckC  onnect | B  lock Co  nnec t@ S  tarsail  sC l  over
             piglin.setImmuneToZombification(true);
         } else if (mob instanceof Hoglin hoglin) {
             hoglin.setImmuneToZombification(true);
