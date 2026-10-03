@@ -76,6 +76,10 @@ Better Peace, plus hostile mobs are allowed back:
 - **Idle mobs stay idle.** In Real Peace a mob may only acquire a target through a live grudge, so a
   wolf stops hunting sheep and an iron golem stops picking fights. The single exception is the
   opt-in hostile-versus-hostile brawl when `hostilesIgnoreEachOther` is turned off.
+- **Anger-driven mobs are gated too.** The warden does not pick fights through target selection - it
+  fills an anger table from the vibrations it hears, and an angry warden roars, charges and swings.
+  That table is now gated at its single predicate, so an unprovoked warden no longer reacts to (or
+  swings at) a protected mob; a warden that was actually hit still retaliates.
 - Nether mobs stay calm outside the Nether and do not mutate: piglins do not turn into zombified
   piglins and hoglins do not turn into zoglins, and while they are away from home they will not
   start a fight - though they will still retaliate if attacked.
