@@ -5,6 +5,49 @@
 
 ---
 
+## {FACTTime: 2026.10.04-05:35:00} WardenAngerGateVerified {FACTNum 13}
+
+GitCommitHashRange: fix/warden-anger-gate (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\WardenMixin.java +37 -0
+.\src\main\resources\betterpeacemode.mixins.json +1 -1
+```
+
+### What's Happened?
+The owner clarified the mob-versus-mob report: what remains is the **attempt** - a warden hearing an
+iron golem, deciding to attack it, and playing the animation, with the damage already refused. That
+meant a decision path had been missed.
+
+### Any evidence?
+The warden's decision path was read out of the shipped 1.21.11 classes:
+
+| Site | Call |
+|---|---|
+| `Warden$VibrationUser#canReceiveVibration` | `!this.canTargetEntity(livingEntity)` decides whether the warden even reacts to a noise |
+| `Warden#increaseAngerAt` | `if (!isNoAi() && this.canTargetEntity(entity))` before anger is added |
+| `Warden#angerManagement.tick(serverLevel, this::canTargetEntity)` | the predicate ages the anger table |
+
+So one predicate covers reception, accumulation and ageing. The behaviour was then measured by
+injecting an identical anger entry through the warden's own save codec
+(`anger:{suspects:[{uuid:<golem>,anger:150}]}`):
+
+| Build | Same injection, read 2 s later | Meaning |
+|---|---|---|
+| v26.0-Alpha.5 | `{suspects: [{uuid: [I; ...], anger: 148}]}` | warden stays angry at the golem - it roars, charges and swings |
+| v26.0-Alpha.6 | `{suspects: []}` | the entry is refused by the peace policy; no attempt, no animation |
+
+Both mobs stayed at full health in both runs.
+
+### FACTs
+"Damage is blocked" and "the fight never starts" are different claims. A mod that only gates damage
+has to walk every decision path of every mob that has one - and the warden has one of its own.
+
+version: v26.0-Alpha.6
+
+---
+
 ## {FACTTime: 2026.10.04-05:20:00} SharedConfigPages {FACTNum 12}
 
 GitCommitHashRange: feat/config-page-api (unmerged)

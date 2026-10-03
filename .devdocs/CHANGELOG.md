@@ -8,6 +8,29 @@
 
 ---
 
+## {ChangeTime: 2026.10.04-05:30:00} WardenAngerGate
+
+GitCommitHash: fix/warden-anger-gate
+
+ChangedFiles:
+```
+.\gradle.properties +2 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\WardenMixin.java +37 -0
+.\src\main\resources\betterpeacemode.mixins.json +1 -1
+.\README.md +4 -0
+.\README.zh.md +1 -0
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|WardenMixin.java|Fix: gate `Warden#canTargetEntity`, the single predicate behind vibration reception, anger accumulation and anger ageing, so an unprovoked warden no longer aims at (or swings at) protected entities|2026.10.04-05:30:00|StarsailsClover
+2|README.md README.zh.md|Docs: mob-versus-mob attempts, not just damage, are now covered|2026.10.04-05:30:00|StarsailsClover
+
+version: v26.0-Alpha.6
+
+---
+
 ## {ChangeTime: 2026.10.04-05:10:00} SharedConfigPagesAndCreativeGrudges
 
 GitCommitHash: feat/config-page-api
