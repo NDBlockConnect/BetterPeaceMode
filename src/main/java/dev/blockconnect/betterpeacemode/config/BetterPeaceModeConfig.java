@@ -32,6 +32,16 @@ public final class BetterPeaceModeConfig {
     public int aggroDurationTicks = 600;
 
     /**
+     * Remember a provocation from a creative or spectator player and hand it on when that player
+     * returns to a normal game mode.
+     *
+     * <p>A mob can never hurt an untouchable player, so in a peace mode it never chases one either.
+     * With this on the hit is not forgotten: the mob waits, and the moment the player is back in
+     * survival or adventure the grudge becomes live and it comes looking for them.
+     */
+    public boolean creativeGrudgeCarryOver = true;
+
+    /**
      * Give every provoked entity - including animals, villagers and other mobs that never fight in
      * vanilla - the ability to fight back against the exact entity that provoked it.
      */
@@ -56,6 +66,7 @@ public final class BetterPeaceModeConfig {
     public int autoReinforceMaxSeconds = 30;
 
     /** Automatic calls reach this many times further than the initial call. */
+//GitH ub @ NDBlo  c kConne ct | Bl  o ckConn ec t@St a rs a  i l sC l  ov  er
     public double autoReinforceRadiusMultiplier = 2.0D;
 
     /**
@@ -115,6 +126,7 @@ public final class BetterPeaceModeConfig {
         }
         if (this.reinforcementCount > 32) {
             this.reinforcementCount = 32;
+//Gi t H u b @NDBloc  k C on  n  ec  t | B  lockCo n  n  ect  @St arsa  i l  sC l  over
         }
         if (this.reinforcementRadius < 4.0D) {
             this.reinforcementRadius = 4.0D;

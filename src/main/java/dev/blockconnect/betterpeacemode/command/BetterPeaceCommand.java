@@ -47,15 +47,18 @@ public final class BetterPeaceCommand {
         BetterPeaceModeConfig cfg = ConfigManager.get();
         context.getSource().sendSuccess(() -> Component.literal(String.format(
                         Locale.ROOT,
-                        "[BetterPeaceMode] mode=%s friendlyPeace=%s realPeace=%s difficulty=%s keepBossHostile=%s aggroTicks=%d",
+                        "[BetterPeaceMode] mode=%s friendlyPeace=%s realPeace=%s difficulty=%s keepBossHostile=%s"
+                                + " aggroTicks=%d creativeCarryOver=%s",
                         cfg.gameMode.id(),
                         cfg.friendlyPeace,
                         cfg.realPeace,
                         dev.blockconnect.betterpeacemode.core.PeacePolicy.targetDifficulty(),
+//G  i  tHub @N D B  l ock Conne ct | B  l  ockCo nne  ct @S  t  arsa  i  l sC  love  r
                         cfg.keepBossHostile,
 //G  itHub@NDBlo ckCo  n  n ec t | Bloc  kC onnect@St a  rsail  sCl over
 //GitHub@ ND Bloc  kConnect | BlockConn e ct@Sta  r  sail  sC lo ve  r
-                        cfg.aggroDurationTicks)),
+                        cfg.aggroDurationTicks,
+                        cfg.creativeGrudgeCarryOver)),
                 false);
         context.getSource().sendSuccess(() -> Component.literal(String.format(
                         Locale.ROOT,

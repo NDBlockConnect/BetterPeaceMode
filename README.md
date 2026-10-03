@@ -68,6 +68,14 @@ Better Peace, plus hostile mobs are allowed back:
   whatever living entity comes within 4 blocks of that baby, and attacks it - a cow will charge the
   wolf that walked up to its calf. Siblings and herd mates are never treated as threats, and
   creative or spectator players are ignored so a parent cannot lock onto someone it can never hurt.
+- **Nobody picks a fight they cannot win.** A mob never chases a creative or spectator player: it
+  cannot hurt them, so the peace modes refuse the target outright instead of letting a zombie follow
+  an invulnerable player around forever. With `creativeGrudgeCarryOver` on, the provocation is not
+  forgotten either - the mob waits, and the moment that player is back in survival or adventure the
+  grudge goes live and it comes looking.
+- **Idle mobs stay idle.** In Real Peace a mob may only acquire a target through a live grudge, so a
+  wolf stops hunting sheep and an iron golem stops picking fights. The single exception is the
+  opt-in hostile-versus-hostile brawl when `hostilesIgnoreEachOther` is turned off.
 - Nether mobs stay calm outside the Nether and do not mutate: piglins do not turn into zombified
   piglins and hoglins do not turn into zoglins, and while they are away from home they will not
   start a fight - though they will still retaliate if attacked.
@@ -116,6 +124,7 @@ Better Peace, plus hostile mobs are allowed back:
 | `hostilesIgnoreEachOther` | Keep hostile mobs from starting fights with each other. Turning it off still protects players, villagers and animals. |
 | `crossDimensionCalm` | Keep Nether mobs calm and unmutated away from the Nether. |
 | `aggroDurationTicks` | How long a one-to-one grudge lasts, clamped to 20-24000. |
+| `creativeGrudgeCarryOver` | Remember a hit from a creative or spectator player and turn it into a real grudge once that player can be hurt again. |
 | `universalRetaliation` | Let every provoked entity fight back, including peaceful mobs that have no combat AI. |
 | `retaliationDamageMultiplier` | Scales the damage a provoked entity deals. |
 | `reinforcementsEnabled` | Let provoked entities call helpers of their own type. |
@@ -146,6 +155,16 @@ both work.
 In single-player the same settings are available from an in-game screen, opened with the mod's
 key binding (default `B`). On a dedicated server the client screen edits the local config, so
 operators should use the command or the server's config file instead.
+
+That screen is also the **shared settings window for the BlockConnect Minecraft line**. Companion
+mods register their own pages through the client API
+(`dev.blockconnect.betterpeacemode.client.api.ConfigPageRegistry`), so installing several of them
+still means one window and one key binding. The page selector shows every page and its position, and
+each page is written against a small layout context so the controls line up with the built-in ones.
+
+An entity carrying the scoreboard tag `bpm.no_reinforcements` is excluded from the recruitment
+system entirely - the hook staged fights such as the ArenaMode gladiator arena use to keep a wave at
+the size the operator asked for.
 
 ## 5 How it works
 

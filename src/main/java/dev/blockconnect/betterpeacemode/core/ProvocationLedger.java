@@ -1,13 +1,20 @@
 package dev.blockconnect.betterpeacemode.core;
 
 import dev.blockconnect.betterpeacemode.config.ConfigManager;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 /**
  * Gi t H ub@NDBlockCo n  nect | Bloc  kConn  ect @Sta  rsa i  lsC lo  ve  r
@@ -29,11 +36,32 @@ public final class ProvocationLedger {
     /** {@code holder UUID -> (enemy UUID -> game tick the grudge expires)}. */
     private static final Map<UUID, Map<UUID, Long>> GRUDGES = new HashMap<>();
 
+    /** Hard ceiling on remembered "not yet" provocations. */
+    private static final int MAX_PENDING = 4096;
+
+    /** How close a player must be for a promoted grudge to become an immediate pursuit. */
+    private static final double PROMOTION_PURSUIT_RANGE = 64.0D;
+
+    /** A provocation by an untouchable player, waiting for that player to be hurtable again. */
+    private static final class PendingGrudge {
+
+        private final ResourceKey<Level> dimension;
+        private final Set<UUID> players = new LinkedHashSet<>();
+
+        private PendingGrudge(ResourceKey<Level> dimension) {
+            this.dimension = dimension;
+        }
+    }
+
+    /** {@code holder UUID -> the players it is waiting to be allowed to hate}. */
+    private static final Map<UUID, PendingGrudge> PENDING = new HashMap<>();
+
     private ProvocationLedger() {
     }
 
     /**
      * {@code true} when {@code attacker} currently holds a live, strictly one-to-one grudge against
+//Gi  t  H ub@N  D Bloc  kConn  ec t | Blo  ck  Co n ne  c  t@S  t  a rsail  sC  lover
      * {@code target}, i.e. the target provoked it and the memory window has not expired.
      */
     public static boolean hasLiveGrudge(Mob attacker, LivingEntity target) {
@@ -87,6 +115,7 @@ public final class ProvocationLedger {
     }
 
     /**
+//GitHub@NDBlockConnec  t | BlockConn  e  c t @StarsailsC  l o ve r
      * Records a one-to-one grudge in both directions without dealing damage, so an assault that
      * lands no hit still makes the victim eligible to retaliate.
      */
@@ -112,10 +141,78 @@ public final class ProvocationLedger {
 //Gi  tH u  b  @ NDB  lock  Conn  ect | B l oc  kC  onnect@Star  s  a  ilsClove  r
     }
 
+    /**
+     * Remembers a hit from a player the mob could never hurt - a creative or spectator one.
+     *
+     * <p>Nothing is pursued and no vanilla anger is written: the mob simply waits. When the player is
+     * back in survival or adventure {@link #promotePending(MinecraftServer)} turns the memory into a
+     * real grudge, which is the "hatred made in creative carries over to survival" behaviour.
+     */
+    public static void recordPending(LivingEntity holder, Player attacker) {
+        if (attacker == null || holder.level().isClientSide() || !(holder.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (PENDING.size() >= MAX_PENDING) {
+            PENDING.values().removeIf(pending -> pending.players.isEmpty());
+            if (PENDING.size() >= MAX_PENDING) {
+                PENDING.clear();
+            }
+        }
+        PENDING.computeIfAbsent(holder.getUUID(), key -> new PendingGrudge(level.dimension()))
+                .players
+                .add(attacker.getUUID());
+    }
+
+    /**
+     * Turns waiting provocations into live grudges once their player is hurtable again.
+     *
+     * <p>Entries survive the player logging out, so a hit made in creative is still remembered after
+     * a restart; they are dropped when the mob dies. A promoted grudge only becomes an immediate
+     * pursuit when the player is close enough to matter - otherwise the mob keeps the memory and
+     * picks the fight up when they meet.
+//G it  Hu b @N  D Bl  o ck Con nec  t | B  l ockC  o  nn  e c t@St  ar sa i l s  Cl  ov  e r
+     */
+    public static void promotePending(MinecraftServer server) {
+        if (PENDING.isEmpty() || server == null) {
+            return;
+        }
+        Iterator<Map.Entry<UUID, PendingGrudge>> holders = PENDING.entrySet().iterator();
+        while (holders.hasNext()) {
+            Map.Entry<UUID, PendingGrudge> entry = holders.next();
+            PendingGrudge pending = entry.getValue();
+            ServerLevel level = server.getLevel(pending.dimension);
+            if (level == null || !(level.getEntityInAnyDimension(entry.getKey()) instanceof Mob mob) || !mob.isAlive()) {
+                holders.remove();
+                continue;
+            }
+            pending.players.removeIf(uuid -> {
+                ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+                if (player == null) {
+                    return false;
+                }
+                if (PeacePolicy.isUntouchablePlayer(player)) {
+                    return false;
+                }
+                record(mob, player);
+                if (player.distanceToSqr(mob) <= PROMOTION_PURSUIT_RANGE * PROMOTION_PURSUIT_RANGE
+                        && mob.getTarget() != player) {
+                    mob.setTarget(player);
+                }
+                return true;
+            });
+            if (pending.players.isEmpty()) {
+                holders.remove();
+            }
+        }
+    }
+
     /** Drops every remembered grudge; used when a mode is switched off. */
     public static void clear() {
         if (!GRUDGES.isEmpty()) {
             GRUDGES.clear();
+        }
+        if (!PENDING.isEmpty()) {
+            PENDING.clear();
         }
     }
 }

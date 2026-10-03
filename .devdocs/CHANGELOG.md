@@ -8,6 +8,42 @@
 
 ---
 
+## {ChangeTime: 2026.10.04-05:10:00} SharedConfigPagesAndCreativeGrudges
+
+GitCommitHash: feat/config-page-api
+
+ChangedFiles:
+```
+.\gradle.properties +2 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPage.java +32 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPageContext.java +64 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPageRegistry.java +37 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\BetterPeaceModeConfigScreen.java +260 -180
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeacePolicy.java +30 -6
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ProvocationLedger.java +92 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +12 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeaceSweep.java +6 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\LivingEntityMixin.java +10 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\config\BetterPeaceModeConfig.java +12 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\command\BetterPeaceCommand.java +4 -2
+.\README.md +18 -1
+.\README.zh.md +18 -1
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|client/api/*.java|New: the settings screen is now extensible - companion mods register pages through ConfigPageRegistry and build them against ConfigPageContext|2026.10.04-05:10:00|StarsailsClover
+2|BetterPeaceModeConfigScreen.java|Change: built-in pages re-expressed on the same context, page selector shows the position, and the two previously missing rule toggles (friendly peace / real peace) were added back to the Rules page|2026.10.04-05:10:00|StarsailsClover
+3|PeacePolicy.java|Fix: a mob never targets a creative or spectator player, and in Real Peace only a live grudge may acquire a target (wolves stop hunting, golems stop picking fights)|2026.10.04-05:10:00|StarsailsClover
+4|ProvocationLedger.java|New: creativeGrudgeCarryOver - a hit from an untouchable player is remembered and promoted to a live grudge once that player is hurtable again|2026.10.04-05:10:00|StarsailsClover
+5|ReinforcementManager.java|New: entities tagged bpm.no_reinforcements are excluded from recruitment, so staged fights keep their configured size|2026.10.04-05:10:00|StarsailsClover
+6|BetterPeaceModeConfigScreen.java|Fix: full-width controls started a new row instead of overlapping the control beside them; cycle buttons no longer render their label twice|2026.10.04-05:10:00|StarsailsClover
+
+version: v26.0-Alpha.5
+
+---
+
 ## {ChangeTime: 2026.10.03-06:50:00} StabilityAndReinforcementContainment
 
 GitCommitHash: feat/alpha4-stability-and-reinforcement-rules

@@ -38,11 +38,21 @@ import net.minecraft.world.phys.AABB;
  */
 public final class ReinforcementManager {
 
+    /**
+     * Scoreboard tag that keeps an entity out of the recruitment system entirely.
+     *
+     * <p>Companion mods that stage their own fights - the ArenaMode gladiator arena is the reason
+     * this exists - tag their entities with it so a staged wave keeps the size the operator asked
+     * for instead of calling seven friends the moment the player hits it.
+     */
+    public static final String NO_REINFORCEMENTS_TAG = "bpm.no_reinforcements";
+
     /** Hard ceiling on simultaneous groups so a busy server cannot be flooded. */
     private static final int MAX_GROUPS = 128;
     /** Minimum delay between two automatic calls, in seconds. */
     private static final int MIN_CALL_SECONDS = 10;
     /** How long the replenishment buffs last. */
+//G i  tHu  b@ NDB lockC  onn  e  ct | Block C  o nn  e c  t@Stars ailsClover
     private static final int BUFF_DURATION_TICKS = 1200;
     /** Vanilla's "infinite" effect duration. */
     private static final int INFINITE_DURATION = -1;
@@ -76,6 +86,9 @@ public final class ReinforcementManager {
         if (PeacePolicy.isExemptBoss(caller) || PeacePolicy.isExemptBoss(enemy)) {
             return;
         }
+        if (caller.getTags().contains(NO_REINFORCEMENTS_TAG)) {
+            return;
+        }
         if (isInAnyGroup(caller.getUUID())) {
             return;
         }
@@ -94,6 +107,7 @@ public final class ReinforcementManager {
         GROUPS.add(group);
         call(level, group, caller, enemy, cfg.reinforcementRadius, false);
     }
+//Git H ub@N DB  lo c  k Co  nnect | Bl  ockC  o  n  nect@S t  a  r s ai  lsC l  ove  r
 
     /** Drives the automatic calls; invoked from the periodic peace sweep. */
     public static void tick(ServerLevel level) {
@@ -148,6 +162,7 @@ public final class ReinforcementManager {
     }
 
     /**
+//GitH  ub@  ND Bl ock C onne ct | Bl  o  c  k C  onn  e ct@Star  sa  i lsClove r
      * The fight this entity should join: same enemy, same dimension, close enough to be the same
      * brawl. Species is deliberately not part of the test - the hate group covers every race.
      */
@@ -201,6 +216,7 @@ public final class ReinforcementManager {
             applyBuffs(helper, random, replenishing, cfg);
             ProvocationLedger.recordMutualGrudge(helper, enemy);
             helper.setTarget(enemy);
+//GitHu b@  NDBlockCo  nnec t | Blo  ckC onnec  t@ St  ar  sa i  lsClo  ver
             group.add(helper.getUUID());
         }
     }
@@ -255,6 +271,7 @@ public final class ReinforcementManager {
                     created.discard();
                 }
                 return null;
+//GitHu  b@ND Blo c kCo  nnect | Blo  c kC  onn  ect@St  a  rsail  s  Clo  ver
             }
             mob.snapTo(
                     pos.getX() + 0.5D,

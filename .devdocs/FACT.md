@@ -5,6 +5,96 @@
 
 ---
 
+## {FACTTime: 2026.10.04-05:20:00} SharedConfigPages {FACTNum 12}
+
+GitCommitHashRange: feat/config-page-api (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPage.java +32 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPageContext.java +64 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\api\ConfigPageRegistry.java +37 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\client\BetterPeaceModeConfigScreen.java +260 -180
+```
+
+### What's Happened?
+The settings window became the shared window for the BlockConnect Minecraft line so companion mods
+do not each need their own key binding and screen.
+
+### Any evidence?
+Verified with a real 1.21.11 client driven through MDL/Despotes (`mdl game key` / `click` /
+`screenshot`), with ArenaMode registering two pages:
+
+| Check | Evidence |
+|---|---|
+| Companion registration | client log: `[ArenaMode] registered 2 settings pages with BetterPeaceMode` |
+| Page count and titles | selector reads `Page: Rules (1/4)`, `Reinforcements (2/4)`, `Arena (3/4)`, `Waves (4/4)` |
+| Rules page | screenshots show mode + friendly peace + real peace + boss + ignore-each-other + nether calm + retaliation + grudge + damage + creative carry-over + baby guard |
+| Waves page | entity id field renders `minecraft:zombie`, with count/seconds sliders and add/remove/move buttons |
+
+### Any Founds?
+Three defects the screenshots exposed and that reasoning alone had missed:
+
+1. A full-width control placed while the layout cursor sat in the right column was drawn on top of
+   the control beside it (Boundary particles and the Wave selector were both hidden).
+2. The cycle button renders `<name>: <message>`, so a message that repeated the label produced
+   `Page: Page: Rules (1/4)` and `Mode: Mode: vanilla`.
+3. An `EditBox` built with a placeholder zero width kept `displayPos` at the end of the value and
+   rendered nothing; and the first colour constant used to "fix" it (`0xFFFFFF`) has alpha 0, which
+   renders nothing either. The value must be set after the box has its final width, and the colour
+   needs an alpha channel (`0xFFFFFFFF`).
+
+### FACTs
+Render the screen and read the pixels; a GUI can pass every unit-level expectation and still be
+unusable.
+
+version: v26.0-Alpha.5
+
+---
+
+## {FACTTime: 2026.10.04-04:55:00} CreativeGrudgesAndIdleMobs {FACTNum 11}
+
+GitCommitHashRange: feat/config-page-api (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\PeacePolicy.java +30 -6
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ProvocationLedger.java +92 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +12 -0
+```
+
+### What's Happened?
+Three owner reports: mobs still fought each other, mobs chased creative players, and creative-mode
+provocations should optionally carry over into survival.
+
+### Any evidence?
+All three measured on the dedicated server in Real Peace with `hostilesIgnoreEachOther = true`:
+
+| Check | Setup | Result |
+|---|---|---|
+| Creative player is not hunted | creative player hits a zombie from 8 blocks | zombie never approaches; player stays at 20.0 |
+| Grudge carries over | same zombie, player switches to survival | within 8 s player health 20.0 -> 9.0 and the zombie is adjacent |
+| No mob-versus-mob fights | wolf + sheep, zombie + villager, zombie + iron golem, 15 s | every victim at full health, and no participant has `last_hurt_by_mob` or a non-zero `HurtByTimestamp` |
+| Staged fight keeps its size | arena zombie carrying `bpm.no_reinforcements` is hit | group stays at 3 instead of calling 7 helpers |
+
+The earlier counter-example - a zombie that lost 13 health next to an iron golem - turned out to be
+sunburn: the mob had wandered out from under the test roof and the sun had risen during the run.
+The surviving zombie and the golem both had `HurtByTimestamp: 0`, which is what disproved the
+combat theory.
+
+### Solutions
+`shouldRefuseTarget` now refuses untouchable players before anything else, refuses every
+non-grudge target in Real Peace (unless the operator opted into hostile brawls), and
+`ProvocationLedger` keeps a pending store that is promoted once the player is hurtable again.
+
+### FACTs
+Before blaming combat, check the damage source: a mob that dies outdoors at dawn looks exactly like
+a mob that lost a fight if you only read the health number.
+
+version: v26.0-Alpha.5
+
+---
+
 ## {FACTTime: 2026.10.03-06:40:00} SpearUseGoalCrashReproduced {FACTNum 9}
 
 GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
