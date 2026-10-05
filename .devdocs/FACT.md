@@ -138,6 +138,62 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-18:20:00} ArenaIntegrationTagContract {FACTNum 16}
+
+GitCommitHashRange: main (v26.0-Alpha.7 with ArenaMode v26.0-Alpha.2)
+
+Files:
+```
+(verification only - no source changes)
+```
+
+### What's Happened?
+ArenaMode stages fights whose size the operator chooses, and the thing that keeps the size is a tag
+contract between the two mods: arena mobs carry `arenamode.arena` **and** `bpm.no_reinforcements`, and
+BetterPeaceMode refuses to recruit anything carrying the second tag. This run checked that contract
+on the wire, together with the session lifecycle around it.
+
+### Any evidence?
+Isolated dedicated server, ArenaMode 26.0.0-Alpha.2 + BetterPeaceMode v26.0-Alpha.7. Every hit was
+issued by an invulnerable armour stand, so the provocation is real but the attacker cannot die:
+
+| Case | Caller tags | Zombies after 12 s |
+|---|---|---|
+| tagged caller | `["a_zombie","bpm.no_reinforcements"]` | **1** - no recruitment |
+| untagged caller | `["b_zombie"]` | **8** = caller + 7 helpers |
+| the arena's contract | `["c_zombie","arenamode.arena","bpm.no_reinforcements"]` | **1** - no recruitment; tags read back exactly as sent |
+
+Two more behaviours were visible in the same session's log:
+
+```
+[ArenaMode] wave 1/1 minecraft:zombie x1 for 120s started: spawned=1 survivors=0 aliveTotal=1
+[ArenaMode] adopted untracked arena entity entity.minecraft.zombie into its wave
+[ArenaMode] ending session: ownerOnline=false levelPresent=true ownerAlive=false sameLevel=false
+```
+
+That is the wave rotation, the Alpha.2 stray-adoption path and the auto-cleanup on owner disconnect,
+all running against the released BetterPeaceMode jar.
+
+### Any Founds?
+The leftover stone slab from FACT 13 caught two more test mobs. Zombies summoned at y=111 inside it
+suffocated, and the suffocation damage's invulnerability window made the very next `/damage` answer
+`Target is invulnerable to the given damage type` - which looked exactly like the tag rule being
+broken. Moving the scene to a clean platform at y=140 made both cases behave. Never place test mobs
+on a coordinate another test has already built in.
+
+**Still unverified**: the shared settings screen itself. ArenaMode contributes its Arena/Waves pages
+through BetterPeaceMode's `ConfigPageRegistry`, and checking that needs a client driven to press `B`.
+The shared test client was taken over by a parallel workstream (a new `bpm-l193` client came up at
+18:13 while that thread's own server was running), so that half is deferred rather than skipped.
+
+### FACTs
+A cross-mod contract is worth testing on the wire, not only in the code: the tag was in both
+code-bases and the behaviour still had to be proven with a tagged caller and an untagged control.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.05-17:50:00} HateGroupSoak {FACTNum 15}
 
 GitCommitHashRange: main (v26.0-Alpha.7, released)
