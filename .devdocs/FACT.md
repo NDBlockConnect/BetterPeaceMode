@@ -138,6 +138,59 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-16:00:00} ThreeModeRegression {FACTNum 13}
+
+GitCommitHashRange: main (v26.0-Alpha.7, released)
+
+Files:
+```
+.\_scripts\mode-regression.ps1 +170 -0
+.\_scripts\panic-ab-test.ps1 +120 -0
+```
+
+### What's Happened?
+Alpha.5 through Alpha.7 changed the target gate, the damage gate, the panic goal and the
+reinforcement placement. The three modes were re-run end to end against the released jar to make
+sure none of those changes moved a rule that was already correct.
+
+### Any evidence?
+`_scripts/mode-regression.ps1` against the published Alpha.7 jar on an isolated dedicated server
+(port 25566, RCON 25576). Each case is one mob-versus-mob hit whose only variable is the active mode,
+plus an attacker-less control hit that must always land:
+
+| Case | Evidence | Result |
+|---|---|---|
+| vanilla lets a wolf hurt a sheep | mob hit removed 3.00, control removed 3.00 | PASS |
+| Better Peace pins the world to Peaceful | difficulty=Peaceful | PASS |
+| Better Peace refuses wolf-on-sheep | mob hit 0.00, control 3.00 | PASS |
+| Real Peace pins the world to Hard | difficulty=Hard | PASS |
+| Real Peace refuses an unprovoked wolf-on-sheep | mob hit 0.00, control 3.00 | PASS |
+| Real Peace keeps an unprovoked warden off a villager | villager 100.0 -> 100.0 over 15 s | PASS |
+| Real Peace lets a provoked warden retaliate | cow 100.0 -> dead over 15 s | PASS |
+
+The last two are a pair on purpose: the Alpha.6 warden gate must stop an unprovoked warden without
+stopping a provoked one, and the baby guard's mutual grudge is the only way to provoke a warden
+without a player online.
+
+### Any Founds?
+Two harness traps, both of which produced convincing false failures before they were understood:
+
+1. The control hit was swallowed by the victim's own 20-tick invulnerability window, which made
+   "vanilla allows a wolf to hurt a sheep" fail even though the first hit landed. The harness now
+   waits 1.4 s between the two hits.
+2. The warden case originally stood the villager at (4,111,0) - inside a stone slab left behind by
+   the placement test. A villager suffocating inside rock loses 2 HP/s with no `last_hurt_by_mob`
+   recorded, which reads exactly like a mob beating on it. The case now runs on a clean platform at
+   y=125, and the warden's anger table is empty in the same run.
+
+### FACTs
+Damage arriving at 2 HP/s with no attacker recorded is suffocation, not combat; check the test
+world for leftover blocks before blaming a mob.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.05-15:20:00} ProvokedMobsKeptFighting {FACTNum 11}
 
 GitCommitHashRange: feat/alpha7-stand-and-fight (unmerged)
