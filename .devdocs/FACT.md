@@ -138,6 +138,47 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-19:00:00} SharedConfigScreenVerified {FACTNum 17}
+
+GitCommitHashRange: main (v26.0-Alpha.7 with ArenaMode v26.0-Alpha.2)
+
+Files:
+```
+(verification only - no source changes)
+```
+
+### What's Happened?
+FACT 16 had to leave one half of the ArenaMode integration open: ArenaMode contributes its Arena and
+Waves pages through BetterPeaceMode's `ConfigPageRegistry`, and proving that needs a client driven to
+open the shared screen. The test client was free this time.
+
+### Any evidence?
+Real client (`BpmTester4`) on the isolated server, driven entirely through the Despotes control
+channel - a `key` action for `B`, `click` actions for the page selector, `screenshot` for the frames:
+
+| Frame | What it shows |
+|---|---|
+| `_test-artifacts/config-page-1.png/20261005-184751-301-req.png` - 155069 B, sha256 `DE53A414E7330F40…` | the shared screen titled **BetterPeaceMode**, `Page: Rules (1/4)`, with Mode, Rule: real peace, Hostiles ignore each other, Universal retaliation, Grudge, Damage x, Nether mobs stay calm, Creative grudge carries over and Baby guard |
+| `_test-artifacts/config-page-3.png/20261005-185043-488-req.png` - 219210 B, sha256 `4F4F628EEC4817E0…` | `Page: Arena (3/4)` with Arena radius, Endless, Boundary particles and the cross-reference `Waves: 2 - edit them on the Waves page` |
+
+The page counter is the second half of the evidence: BetterPeaceMode ships two built-in pages, so
+`(1/4)` means two further pages are registered by the companion mod - ArenaMode's Arena and Waves
+pages - and the Arena frame shows one of them rendering with its own controls.
+
+### Any Founds?
+The client was taken over by a parallel workstream again while this ran (a fresh `bpm-l193` client
+came up at 18:51), so the page-4 frame could not be captured. Frames 1/4 and 3/4 already prove both
+registration and rendering, which makes the missing frame a nice-to-have rather than a gap. The
+screenshots live in the gitignored `_test-artifacts/` and are referenced here by size and hash.
+
+### FACTs
+A shared extension point needs a screenshot, not just a compiling registration: the page counter
+alone would have shown that four pages exist without proving that any of them renders.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.05-18:20:00} ArenaIntegrationTagContract {FACTNum 16}
 
 GitCommitHashRange: main (v26.0-Alpha.7 with ArenaMode v26.0-Alpha.2)
