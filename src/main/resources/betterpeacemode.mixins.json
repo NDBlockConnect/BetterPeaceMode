@@ -15,7 +15,8 @@
     "ServerLevelMixin",
     "ZombieMixin",
     "SpearUseGoalMixin",
-    "WardenMixin"
+    "WardenMixin",
+    "PanicGoalMixin"
   ],
   "injectors": {
     "defaultRequire": 1

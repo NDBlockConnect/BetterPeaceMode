@@ -138,6 +138,90 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-15:20:00} ProvokedMobsKeptFighting {FACTNum 11}
+
+GitCommitHashRange: feat/alpha7-stand-and-fight (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\PanicGoalMixin.java +50 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\RetaliationManager.java +24 -2
+```
+
+### What's Happened?
+Real Peace promises that anything which is hit fights back, and Alpha.7 was written to close the gap
+the release notes had been carrying as a known limitation: provoked animals hit once and then ran.
+
+### Any evidence?
+A deterministic scenario on an isolated dedicated server (`bpm-server-1211`, port 25566, RCON
+25576) with reinforcements switched off so the fight stays two-sided: the baby guard gives a cow a
+live grudge against a no-AI zombie standing next to its calf, and the harness feeds the cow an
+attacker-less fall hit every two seconds, which is vanilla's panic trigger. Every number is read
+back over RCON.
+
+| Build | zombie HP at 0/2/4/6/8/10 s | Outcome |
+|---|---|---|
+| Alpha.6 | 20.00 / 17.06 / 14.12 / 8.24 / 2.36 / 2.36 | five hits in eight seconds, then no damage for the rest of the run - the cow had left the fight |
+| Alpha.7 | 20.00 / 17.06 / 14.12 / 8.24 / 5.30 / dead | keeps swinging until the target dies, while still being panicked every two seconds |
+
+### Any Founds?
+Two earlier attempts to measure this were junk, and both are worth remembering:
+
+1. **Reinforcements confounded the first runs.** The moment the cow landed its first hit the zombie
+   recruited seven helpers under the normal rules, and the horde - not the panic - is what killed the
+   cow. The scenario now runs with `reinforcementsEnabled=false`.
+2. **The calf was standing in the path.** With the calf between the cow and the zombie, the cow
+   stopped 1.8 blocks short of its target, which looked exactly like a melee-range bug. Moving the
+   calf aside showed the mob paths fine; the stall was geometry, not reach.
+
+An intermediate attempt also switched the chase to `Navigation#createPath(entity, 0)` on the theory
+that the convenience overload stops one block short. Vanilla's own `MeleeAttackGoal` uses the
+convenience overload, so that theory was wrong and the change was reverted; what remained is the
+re-path cadence, which is what the vanilla goal actually does differently from a per-tick call.
+
+### Solutions
+`PanicGoalMixin` cancels `shouldPanic` while the mob holds a live grudge, and the counter-attack
+re-plans its path every ten ticks instead of every tick.
+
+### FACTs
+Before blaming a game mechanic for a behavioural result, make sure the test world is not fighting
+back: a second wave of mobs and a baby animal standing in the path both produced convincing but
+wrong conclusions.
+
+version: v26.0-Alpha.7
+
+---
+
+## {FACTTime: 2026.10.05-15:28:00} HelperPlacementVerified {FACTNum 12}
+
+GitCommitHashRange: feat/alpha7-stand-and-fight (unmerged)
+
+Files:
+```
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +46 -4
+```
+
+### What's Happened?
+Helpers used to be placed at the caller's own Y, which buried them in a hillside or a slab when the
+random offset landed in solid rock; a buried helper suffocates before it reaches the fight.
+
+### Any evidence?
+Isolated server, `reinforcementRadius` set to 6, a stone slab covering the eastern half of the spawn
+area at helper height, one provoked zombie:
+
+| Build | Zombies alive after 8 s | Notes |
+|---|---|---|
+| first version (searched up and down) | 4 of 8 | the downward search put the rest under the platform, where they fell to their deaths; fresh rotten flesh confirmed it |
+| final version (searches up only, needs ground within 4 blocks) | 8 of 8 | four helpers stood on the roof at y=115 - relocated out of the slab instead of dying; the three rotten-flesh stacks still in the world were 1505 ticks old, i.e. leftovers from the failed run |
+
+### FACTs
+A placement search has to be judged by where it can send a mob, not only by whether the spot is
+free: open air under a platform is free and lethal.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.03-06:40:00} SpearUseGoalCrashReproduced {FACTNum 9}
 
 GitCommitHashRange: feat/alpha4-stability-and-reinforcement-rules (unmerged)
