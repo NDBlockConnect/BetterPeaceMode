@@ -138,6 +138,51 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-17:50:00} HateGroupSoak {FACTNum 15}
+
+GitCommitHashRange: main (v26.0-Alpha.7, released)
+
+Files:
+```
+.\_scripts\hate-group-soak.ps1 +150 -0
+```
+
+### What's Happened?
+The complaint that started this whole line of work was a fight that grew until the world died:
+slimes calling helpers, helpers calling more helpers, splits feeding the pile. Alpha.4 through
+Alpha.7 added the rules meant to stop that; this soak keeps ten hate groups alive at once for four
+minutes and watches the server instead of the fight.
+
+### Any evidence?
+Released Alpha.7 jar (sha256 `9f9976c7…`), isolated dedicated server, `areaLimitEnabled=false` so the
+per-area budget cannot mask the group logic, ten invulnerable enemies with one caller each - five
+zombies and five cows, all at 100 HP so nothing dies of its own accord:
+
+| t | ticks/s | mobs | mem (MB) |
+|---|---|---|---|
+| 20s | 20.08 | 80 | 565 |
+| 41s | 19.99 | 80 | 560 |
+| 61s | 20.03 | 79 | 573 |
+| 122s | 20.00 | 80 | 554 |
+| 183s | 19.98 | 80 | 564 |
+| 245s | 19.98 | 80 | 540 |
+
+min ticks/s = 19.94 (target 20), peak mobs = 80, which is exactly
+`groups x (reinforcementCount + 1)` = 10 x 8. The single 79 is a helper that was briefly gone and was
+replaced by that group's next top-up call, which is the replenishment path doing its job.
+
+No exception, no `Can't keep up!` warning and no memory growth in the whole run. The cows matter as
+much as the zombies here: half the groups were peaceful callers, so universal retaliation, the
+chase path and recruitment all ran for mobs that have no combat AI of their own.
+
+### FACTs
+"Bounded" is a claim about the ceiling, not about the first sample: hold the scene long enough for
+several auto-reinforce timers to fire before believing a population is stable.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.05-17:30:00} CreativeCarryOverVerified {FACTNum 14}
 
 GitCommitHashRange: main (v26.0-Alpha.7, released)
