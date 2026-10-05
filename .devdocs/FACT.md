@@ -138,6 +138,69 @@ version: v26.0-Alpha.5
 
 ---
 
+## {FACTTime: 2026.10.05-17:30:00} CreativeCarryOverVerified {FACTNum 14}
+
+GitCommitHashRange: main (v26.0-Alpha.7, released)
+
+Files:
+```
+.\_scripts\creative-carryover-test.ps1 +180 -0
+```
+
+### What's Happened?
+Alpha.5 shipped two rules that had never been exercised end to end: a mob must never lock onto a
+creative or spectator player, and a hit from such a player is remembered as a *pending* grudge that
+is promoted the moment that player is hurtable again. Both were checked with a real client standing
+in the world on the isolated dedicated server.
+
+### Any evidence?
+Staged run with a temporary debug line in the ledger, fresh client `BpmTester2`:
+
+```
+17:23:45 [BPM-DEBUG] pending recorded holder=entity.minecraft.zombie player=BpmTester2 carryOver=true
+17:23:58 [BPM-DEBUG] pending promoted holder=entity.minecraft.zombie player=BpmTester2 distanceSqr=121.63 target=null
+```
+
+The promotion fired on the first sweep after the player switched to survival; the zombie then walked
+from twelve blocks away to 0.8 blocks and took the player from 200 HP to 195.5 within seconds.
+
+`_scripts/creative-carryover-test.ps1` repeats that as seven assertions:
+
+| Case | Evidence | Result |
+|---|---|---|
+| the player stands on the platform | y=130, max health 20 | PASS |
+| the creative player can still land the hit | provocation issued | PASS |
+| a creative player is never locked onto | closest approach 12.9 blocks over 12 s | PASS |
+| the creative player takes no damage | 20.0 of 20.0 | PASS |
+| the player really is in survival for phase two | playerGameType=0 | PASS |
+| the remembered grudge is promoted once hurtable | health 20.0 -> 0.0 | PASS |
+| the zombie closes the distance in survival | closest approach 0.8 blocks | PASS |
+
+### Any Founds?
+Three harness problems produced "product is broken" results before the real cause was found:
+
+1. **PowerShell split the commands.** `@('tp ' + $Player + ' 0 130 0', ...)` is not one string: the
+   array literal turns it into `'tp '`, `'BpmTester2'`, `' 0 130 0'`, so the script sent three
+   invalid commands. The teleport never happened, the gamemode never changed and the damage command
+   never had an attacker - which is why three consecutive runs "proved" the carry-over was broken.
+   The script now uses interpolated strings, and the ledger's debug output was the evidence that
+   finally separated the two.
+2. **A dead client stays dead.** A player that dies in an unattended client sits on the respawn
+   screen: its player data keeps health 0, so every later phase reads nonsense (the first guard run
+   reported `y=130, gameType=0, health=0`). The harness now checks for that and stops with a SKIP
+   line, and the test moved to a fresh username.
+3. **The test instance does not run a vanilla 20 HP player.** Reading `Health` and assuming 20 made
+   the "no damage in creative" check meaningless; the harness now reads the max-health attribute
+   first.
+
+### FACTs
+A red test is not evidence of a product defect until you have confirmed the test's own commands
+reached the server; print what is actually sent when a harness disagrees with a hand-run command.
+
+version: v26.0-Alpha.7
+
+---
+
 ## {FACTTime: 2026.10.05-16:00:00} ThreeModeRegression {FACTNum 13}
 
 GitCommitHashRange: main (v26.0-Alpha.7, released)
