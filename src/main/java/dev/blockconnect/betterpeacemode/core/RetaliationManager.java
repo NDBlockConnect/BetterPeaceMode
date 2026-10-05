@@ -23,10 +23,13 @@ public final class RetaliationManager {
 
     /** One swing per second, matching a vanilla mob's typical attack cadence. */
     private static final int ATTACK_COOLDOWN_TICKS = 20;
+    /** How often a chasing counter-attacker re-plans its path, in ticks. */
+    private static final int REPATH_INTERVAL_TICKS = 10;
     /** How fast a provoked mob closes the distance. */
     private static final double CHASE_SPEED = 1.0D;
 
     private static final Map<Mob, Long> LAST_ATTACK_TICK = new WeakHashMap<>();
+    private static final Map<Mob, Long> NEXT_REPATH_TICK = new WeakHashMap<>();
 
     private RetaliationManager() {
     }
@@ -52,11 +55,31 @@ public final class RetaliationManager {
         }
         mob.getLookControl().setLookAt(enemy, 30.0F, 30.0F);
         if (mob.isWithinMeleeAttackRange(enemy)) {
+//GitH  ub@NDB  lockC  onn e  ct | Blo  c kC onne  c t  @Starsails Clo  ver
             attack(mob, enemy);
         } else if (mob instanceof PathfinderMob pathfinder) {
-            pathfinder.getNavigation().moveTo(enemy, CHASE_SPEED);
+            chase(pathfinder, enemy);
 //Git  Hub  @NDBl o  c k C on n  ect | B lo  ckConn  e  ct@Sta  r  s  a  i lsClover
         }
+    }
+
+    /**
+     * Walks a provoked mob towards the entity it is fighting.
+     *
+     * <p>This mirrors what {@code MeleeAttackGoal} does for a mob that ships a combat AI: plan with
+     * {@code PathNavigation#moveTo(Entity, double)} and re-plan every few ticks, rather than asking
+     * for a fresh path on every tick. The cadence matters - a mob whose path is replaced every tick
+     * never gets to walk it, which is what left provoked animals standing next to their attacker
+     * without landing a blow.
+     */
+    private static void chase(PathfinderMob mob, LivingEntity enemy) {
+        long now = mob.level().getGameTime();
+        Long next = NEXT_REPATH_TICK.get(mob);
+        if (next != null && now < next) {
+            return;
+        }
+        NEXT_REPATH_TICK.put(mob, now + REPATH_INTERVAL_TICKS);
+        mob.getNavigation().moveTo(enemy, CHASE_SPEED);
     }
 
     private static void attack(Mob mob, LivingEntity enemy) {

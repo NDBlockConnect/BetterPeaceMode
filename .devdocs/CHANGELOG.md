@@ -8,6 +8,33 @@
 
 ---
 
+## {ChangeTime: 2026.10.05-15:30:00} StandAndFight
+
+GitCommitHash: feat/alpha7-stand-and-fight
+
+ChangedFiles:
+```
+.\gradle.properties +2 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\mixin\PanicGoalMixin.java +50 -0
+.\src\main\java\dev\blockconnect\betterpeacemode\core\RetaliationManager.java +24 -2
+.\src\main\java\dev\blockconnect\betterpeacemode\core\ReinforcementManager.java +46 -4
+.\src\main\resources\betterpeacemode.mixins.json +2 -2
+.\README.md +5 -3
+.\README.zh.md +5 -3
+```
+
+ChangeLog:
+Num|File Name|Change Description|Change Time|Changer
+----|----|----|----|----
+1|PanicGoalMixin.java|Fix: a mob that holds a live Real Peace grudge no longer runs the vanilla panic goal, so a provoked animal stands and fights instead of fleeing from the thing it is supposed to be attacking|2026.10.05-15:10:00|StarsailsClover
+2|RetaliationManager.java|Fix: the counter-attack chase re-plans its path on a vanilla-like cadence instead of asking for a fresh path every tick, and it no longer spends a pathfinding pass per mob per tick|2026.10.05-15:15:00|StarsailsClover
+3|ReinforcementManager.java|Fix: helper placement searches upward for a spot whose hitbox fits and that has ground within four blocks, so a helper is neither buried in a hillside nor dropped under a platform|2026.10.05-15:25:00|StarsailsClover
+4|README.md README.zh.md|Docs: the provoked-mob rule now says the mob keeps fighting, not just that it may hit back once|2026.10.05-15:30:00|StarsailsClover
+
+version: v26.0-Alpha.7
+
+---
+
 ## {ChangeTime: 2026.10.04-05:30:00} WardenAngerGate
 
 GitCommitHash: fix/warden-anger-gate

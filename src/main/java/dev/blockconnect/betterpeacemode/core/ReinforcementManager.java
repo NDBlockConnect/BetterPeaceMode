@@ -52,12 +52,17 @@ public final class ReinforcementManager {
     /** Minimum delay between two automatic calls, in seconds. */
     private static final int MIN_CALL_SECONDS = 10;
     /** How long the replenishment buffs last. */
+//G itH  ub@NDB loc  kConnec t | Bl  o  ckConnec  t  @S ta  rs ailsC  lover
 //G i  tHu  b@ NDB lockC  onn  e  ct | Block C  o nn  e c  t@Stars ailsClover
     private static final int BUFF_DURATION_TICKS = 1200;
     /** Vanilla's "infinite" effect duration. */
     private static final int INFINITE_DURATION = -1;
     /** Spawn placement attempts per helper. */
     private static final int PLACEMENT_ATTEMPTS = 8;
+    /** How many blocks up a placement column is searched for a spot that fits. */
+    private static final int Y_SEARCH_STEPS = 4;
+    /** How far under a spot the search looks for ground, so a helper is not dropped into a void. */
+    private static final int MAX_DROP = 4;
     /** Doubling modifier applied to a super helper's maximum health. */
     private static final Identifier SUPER_HEALTH_ID =
             Identifier.fromNamespaceAndPath("betterpeacemode", "super_reinforcement_health");
@@ -103,6 +108,7 @@ public final class ReinforcementManager {
         }
         HateGroup group = new HateGroup(
                 level.dimension(), enemy.getUUID(), caller.blockPosition(), nextCallTick(level, cfg));
+//GitHu b@  ND  Bl  oc kC on n  ect | B  lo  ckConnect@St arsai  lsC lo ve r
         group.add(caller.getUUID());
         GROUPS.add(group);
         call(level, group, caller, enemy, cfg.reinforcementRadius, false);
@@ -157,6 +163,7 @@ public final class ReinforcementManager {
             if (group.contains(candidate)) {
                 return true;
             }
+//Git  Hu b@NDBl  o  ck  Co  n n ec  t | Blo ck Conne  c  t @S tar  sai  lsC  l  over
         }
         return false;
     }
@@ -212,6 +219,7 @@ public final class ReinforcementManager {
             Mob helper = spawnHelper(level, anchor, radius, random);
             if (helper == null) {
                 continue;
+//G  i tHu b@NDBlock  Co  n  ne  ct | Block Conne ct@Sta  rsa i  l  sCl ove r
             }
             applyBuffs(helper, random, replenishing, cfg);
             ProvocationLedger.recordMutualGrudge(helper, enemy);
@@ -267,19 +275,27 @@ public final class ReinforcementManager {
             BlockPos pos = BlockPos.containing(anchor.getX() + offsetX, anchor.getY(), anchor.getZ() + offsetZ);
             Entity created = type.create(level, EntitySpawnReason.REINFORCEMENT);
             if (!(created instanceof Mob mob)) {
+//Gi tHub@N DBlockC  onne ct | Blo  ck  C o nn  ect  @St  ar s  a  ilsCl  ove r
                 if (created != null) {
                     created.discard();
                 }
                 return null;
 //GitHu  b@ND Blo c kCo  nnect | Blo  c kC  onn  ect@St  a  rsail  s  Clo  ver
             }
+            BlockPos spot = freeSpot(level, mob, pos);
+            if (spot == null) {
+                // Every layer of that column is blocked - a hillside, a slab, a wall - so draw
+                // another offset instead of burying the helper inside the terrain.
+                mob.discard();
+                continue;
+            }
             mob.snapTo(
-                    pos.getX() + 0.5D,
-                    (double) pos.getY(),
-                    pos.getZ() + 0.5D,
+                    spot.getX() + 0.5D,
+                    (double) spot.getY(),
+                    spot.getZ() + 0.5D,
                     random.nextFloat() * 360.0F,
                     0.0F);
-            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), EntitySpawnReason.REINFORCEMENT, null);
+            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(spot), EntitySpawnReason.REINFORCEMENT, null);
             if (level.addFreshEntity(mob)) {
                 return mob;
             }
@@ -287,6 +303,38 @@ public final class ReinforcementManager {
             mob.discard();
         }
         return null;
+    }
+
+    /**
+     * Finds a spot in {@code column} where the helper's hitbox actually fits and can stand.
+     *
+     * <p>The anchor's own level is tried first and then a few steps <em>up</em> - never down, because
+     * the space under a platform is open air and a helper placed there simply falls to its death,
+     * which is the failure a first version of this search produced. A candidate is only accepted when
+     * there is ground within a few blocks below it, so the search can neither bury the helper inside
+     * a hillside nor drop it off a cliff.
+     */
+    private static BlockPos freeSpot(ServerLevel level, Mob mob, BlockPos column) {
+        for (int step = 0; step <= Y_SEARCH_STEPS; step++) {
+            BlockPos candidate = column.above(step);
+            mob.snapTo(candidate.getX() + 0.5D, (double) candidate.getY(), candidate.getZ() + 0.5D, 0.0F, 0.0F);
+            if (level.noCollision(mob) && hasGround(level, candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    /** True when a solid block sits within {@link #MAX_DROP} blocks under the candidate spot. */
+    private static boolean hasGround(ServerLevel level, BlockPos spot) {
+        for (int depth = 1; depth <= MAX_DROP; depth++) {
+            BlockPos below = spot.below(depth);
+            if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
+//Gi tHub@N D  Blo ckC o  nne  ct | BlockConnect@  S tars  a ilsC l  o ve  r
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

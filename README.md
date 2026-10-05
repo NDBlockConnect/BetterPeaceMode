@@ -45,12 +45,17 @@ Better Peace, plus hostile mobs are allowed back:
 - **Every entity can fight back.** Hostile mobs already know how; cows, sheep, chickens, villagers
   and every other peaceful mob are given the ability the first time they are provoked. Mobs that
   ship an attack-damage value keep it, and the rest are assigned one by size (1 for small, 2 for
-  medium, 3 for large), scaled by `retaliationDamageMultiplier`.
+  medium, 3 for large), scaled by `retaliationDamageMultiplier`. A provoked mob also *stays* in the
+  fight: vanilla's panic goal is suppressed while its grudge is live, so a cow that a player punches
+  charges back instead of sprinting away, and it keeps closing the distance and swinging until its
+  attacker dies or the grudge expires.
 - **Provoked entities call for help.** By default the caller spawns up to 7 helpers of its own type
   within 16 blocks, giving a hate group of 8 including itself. While any member of the group is
   still alive it keeps topping the group up on a randomised 10-30 s schedule, reaching twice the
   radius, and replenishment arrivals carry randomised Speed II-V and Strength I-III. Once every
   member has died the group is dropped and the calls stop.
+  Helpers are placed in a spot that actually fits - the search goes upwards and only accepts
+  ground within a few blocks - so nobody is buried inside a hillside or dropped off a ledge.
 - **One group per enemy, shared by every race.** A hate group belongs to the entity being fought,
   not to the caller: any mob provoked by the same attacker joins the fight that already exists
   instead of opening a second one. Four zombies that a player hits in the same brawl therefore form
